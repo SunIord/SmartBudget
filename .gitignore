@@ -37,7 +37,7 @@ build/
 builds/
 
 # VSCode
-#.vscode/
+.vscode/
 
 # backup files (local)
 *.backup
