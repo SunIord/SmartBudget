@@ -62,7 +62,7 @@ Index of this file:
 #ifdef IMGUI_USER_CONFIG
 #include IMGUI_USER_CONFIG
 #endif
-#include "imgui/imconfig.h"
+#include "../../lib/imgui/imconfig.h"
 
 #ifndef IMGUI_DISABLE
 
@@ -3790,7 +3790,7 @@ namespace ImGui
 #ifdef IMGUI_USER_H_FILENAME
 #include IMGUI_USER_H_FILENAME
 #else
-#include "imgui/imgui_user.h"
+#include "../lib/imgui/imgui_user.h"
 #endif
 #endif
 
