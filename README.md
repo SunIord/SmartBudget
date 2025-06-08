@@ -18,6 +18,66 @@
   - CSV
 - **Controle de Versão:** Git
 
+## Compilação e Execução
+
+### Linux (Arch, EndeavourOS, Manjaro, etc.)
+
+**Requisitos:**
+
+```bash
+sudo pacman -Syu
+sudo pacman -S cmake glfw-x11 glew libx11 base-devel
+```
+
+**Compilação:**
+
+```bash
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
+**Execução:**
+
+```bash
+./SmartBudget
+```
+
+---
+
+### Windows (VS Code + MinGW)
+
+**Pré-requisitos:**
+
+- Baixe e instale o [MinGW-w64](https://www.winlibs.com/)
+- Baixe o GLFW pré-compilado em https://www.glfw.org/download.html
+- Instale o [CMake](https://cmake.org/download/)
+- Configure o `PATH` do MinGW (adicione `bin/` no ambiente do sistema)
+
+**Compilação:**
+
+No terminal do PowerShell ou CMD:
+
+```bash
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+```
+
+**Execução:**
+
+```bash
+.uild\SmartBudget.exe
+```
+
+**Alternativa (Visual Studio):**
+
+- Instale o Visual Studio 2022 com o pacote "Desenvolvimento para desktop com C++"
+- Abra o projeto com `CMakeLists.txt`
+- Compile e execute diretamente pela IDE
+
+---
+
 ## Arquitetura Orientada a Objetos
 
 ### Classes Principais:
@@ -52,9 +112,9 @@
 
 ## Equipe
 
-- **Marcello Menezes** <<meam>>
-- **João Pedro** <<jpam>>
+- **[Marcello Menezes](mailto:meam@cin.ufpe.br)**
+- **[João Pedro](mailto:jpam@cin.ufpe.br)**
 
 ---
 
-> _SmartBudget: Controle suas finanças sem complicação._
+_SmartBudget: Controle suas finanças sem complicação._
