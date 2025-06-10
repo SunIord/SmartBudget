@@ -1,26 +1,25 @@
-// .vscode/launch.json
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Executar SmartBudget",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/build/smartbudget",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "${workspaceFolder}",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "miDebuggerPath": "/usr/bin/gdb", // ou "C:\\mingw64\\bin\\gdb.exe" no Windows
-      "setupCommands": [
+    "version": "0.2.0",
+    "configurations": [
         {
-          "description": "Habilita impressão de variáveis",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
+            "name": "Executar SmartBudget",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/SmartBudget.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         }
-      ]
-    }
-  ]
+    ]
 }

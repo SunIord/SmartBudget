@@ -18,6 +18,66 @@
   - CSV
 - **Controle de Versão:** Git
 
+## Compilação e Execução
+
+### Linux (Arch, EndeavourOS, Manjaro, etc.)
+
+**Requisitos:**
+
+```bash
+sudo pacman -Syu
+sudo pacman -S cmake glfw-x11 glew libx11 base-devel
+```
+
+**Compilação:**
+
+```bash
+mkdir -p build
+cd build
+cmake ..
+make
+```
+
+**Execução:**
+
+```bash
+./SmartBudget
+```
+
+---
+
+### Windows (VS Code + MSYS2)
+
+**Pré-requisitos:**
+
+1. Baixe e instale o MSYS2: https://www.msys2.org
+2. Abra o terminal `MSYS2 MinGW 64-bit`
+3. Execute:
+
+```bash
+pacman -Syu
+pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-glfw mingw-w64-x86_64-glew
+```
+
+**Compilação:**
+
+No terminal `MSYS2 MinGW 64-bit`, navegue até a raiz do projeto e execute:
+
+```bash
+cmake -B build -G "MinGW Makefiles"
+cmake --build build
+```
+
+**Execução:**
+
+```bash
+./build/SmartBudget.exe
+```
+
+**Observação:** Use sempre o terminal `MSYS2 MinGW 64-bit` para compilar e rodar o programa. Não use o MSYS shell nem o PowerShell padrão.
+
+---
+
 ## Arquitetura Orientada a Objetos
 
 ### Classes Principais:
@@ -57,4 +117,4 @@
 
 ---
 
-> _SmartBudget: Controle suas finanças sem complicação._
+_SmartBudget: Controle suas finanças sem complicação._
