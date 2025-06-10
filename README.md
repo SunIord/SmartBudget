@@ -112,8 +112,8 @@ cmake --build build
 
 ## Equipe
 
-- **Marcello Menezes** <<meam>>
-- **João Pedro** <<jpam>>
+- **Marcello Menezes** <meam<meam>>
+- **João Pedro** <jpam<jpam>>
 
 ---
 
