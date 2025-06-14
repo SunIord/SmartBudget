@@ -4,8 +4,6 @@
 #include "transaction.hpp"
 #include <vector>
 
-using namespace std;
-
 class TransactionManager {
 private:
     vector<Transaction> transactions;
