@@ -15,6 +15,7 @@ public:
     void filterByType(const string& type) const;
     void filterByCategory(const string& category) const;
     void updateTransaction(int index, const Transaction& newTransaction);
+    const vector<Transaction>& getTransactions() const;
 };
 
 #endif
