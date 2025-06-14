@@ -56,3 +56,7 @@ void TransactionManager::updateTransaction(int index, const Transaction& newTran
         cout << "Indice invalido. Nenhuma transacao foi atualizada." << endl;
     }
 }
+
+const vector<Transaction>& TransactionManager::getTransactions() const {
+    return transactions;
+}
