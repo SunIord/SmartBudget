@@ -2,7 +2,6 @@
 #define TRANSACTIONMANAGER_HPP
 
 #include "transaction.hpp"
-#include <vector>
 
 namespace smartbudget {
 

@@ -3,10 +3,11 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 using namespace std; 
 
 namespace smartbudget {
-    
+
 class Transaction {
 private:
     double amount;
