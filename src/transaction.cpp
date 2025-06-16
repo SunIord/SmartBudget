@@ -1,4 +1,5 @@
 #include "transaction.hpp"
+using namespace smartbudget;
 
 Transaction::Transaction(double amount, const string& type, const string& category, const string& date, const string& description)
     : amount(amount), type(type), category(category), date(date), description(description) {}
@@ -14,6 +15,7 @@ void Transaction::setType(const string& newType) { type = newType; }
 void Transaction::setCategory(const string& newCategory) { category = newCategory; }
 void Transaction::setDate(const string& newDate) { date = newDate; }
 void Transaction::setDescription(const string& newDescription) { description = newDescription; }
+//função apenas para imprimir os dados da transação na main2.cpp
 void Transaction::print() const {
     cout << "Valor: " << amount << endl;
     cout << "Tipo: " << type << endl;
@@ -23,7 +25,7 @@ void Transaction::print() const {
     cout << "------------------------------" << endl;
 }
 
-
+//função para converter os dados da transação em uma string no formato CSV
 string Transaction::toCSV() const {
     return to_string(amount) + "," + type + "," + category + "," + date + "," + description;
 }

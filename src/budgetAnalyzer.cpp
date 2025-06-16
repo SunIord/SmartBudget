@@ -1,4 +1,5 @@
 #include "budgetAnalyzer.hpp"
+using namespace smartbudget;
 
 double BudgetAnalyzer::calculateBalance(const vector<Transaction>& transactions) const {
     double balance = 0.0;

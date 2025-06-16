@@ -5,6 +5,8 @@
 #include <string>
 using namespace std; 
 
+namespace smartbudget {
+    
 class Transaction {
 private:
     double amount;
@@ -22,15 +24,15 @@ public:
     string getCategory() const;
     string getDate() const;
     string getDescription() const;
-
     void setAmount(double newAmount);
     void setType(const string& newType);
     void setCategory(const string& newCategory);
     void setDate(const string& newDate);
     void setDescription(const string& newDescription);
     void print() const;
-
     string toCSV() const;
 };
+
+}
 
 #endif

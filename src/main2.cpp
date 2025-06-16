@@ -4,6 +4,7 @@
 #include "transaction.hpp"
 #include "transactionManager.hpp"
 #include "budgetAnalyzer.hpp"
+using namespace smartbudget;
 
 int main() {
     TransactionManager manager;
@@ -19,6 +20,8 @@ int main() {
         cout << "4. Calcular saldo total\n";
         cout << "5. Total por categoria\n";
         cout << "6. Total por tipo\n";
+        cout << "7. Filtrar por intervalo de datas\n";
+        cout << "8. Filtrar por intervalo de valores\n";
         cout << "0. Sair\n";
         cout << "Escolha uma opcao: ";
         cin >> opcao;
@@ -83,6 +86,42 @@ int main() {
             cin >> tipo;
             double total = analyzer.calculateTotalByType(manager.getTransactions(), tipo);
             cout << "Total do tipo '" << tipo << "': " << total << endl;
+        }
+
+        else if (opcao == 7) {
+            string inicio, fim;
+            cout << "Digite a data inicial (YYYY-MM-DD): ";
+            cin >> inicio;
+            cout << "Digite a data final (YYYY-MM-DD): ";
+            cin >> fim;
+
+            auto resultados = manager.filterByDateRange(inicio, fim);
+
+            if (resultados.empty()) {
+                cout << "Nenhuma transacao encontrada no intervalo de datas.\n";
+            } else {
+                for (const auto& t : resultados) {
+                    t.print();
+                }
+            }
+        }
+
+        else if (opcao == 8) {
+            double minimo, maximo;
+            cout << "Digite o valor minimo: ";
+            cin >> minimo;
+            cout << "Digite o valor maximo: ";
+            cin >> maximo;
+
+            auto resultados = manager.filterByAmountRange(minimo, maximo);
+
+            if (resultados.empty()) {
+                cout << "Nenhuma transacao encontrada no intervalo de valores.\n";
+            } else {
+                for (const auto& t : resultados) {
+                    t.print();
+                }
+            }
         }
 
         else if (opcao == 0) {
