@@ -1,4 +1,8 @@
 {
     "cmake.generator": "MinGW Makefiles",
-    "cmake.sourceDirectory": "${workspaceFolder}"
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "C_Cpp.default.compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }
