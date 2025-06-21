@@ -27,5 +27,20 @@ void Transaction::print() const {
 
 //função para converter os dados da transação em uma string no formato CSV
 string Transaction::toCSV() const {
-    return to_string(amount) + "," + type + "," + category + "," + date + "," + description;
+    auto escape = [](const string& str) {
+        bool needsQuotes = str.find(',') != string::npos || str.find('"') != string::npos || str.find('\n') != string::npos;
+        if (needsQuotes) {
+            string escaped = "\"";
+            for (char c : str) {
+                if (c == '"') escaped += "\"\"";  // Aspas internas viram dupla
+                else escaped += c;
+            }
+            escaped += "\"";
+            return escaped;
+        } else {
+            return str;
+        }
+    };
+
+    return to_string(amount) + "," + escape(type) + "," + escape(category) + "," + escape(date) + "," + escape(description);
 }
