@@ -1,4 +1,5 @@
 {
     "cmake.generator": "MinGW Makefiles",
-    "cmake.sourceDirectory": "${workspaceFolder}"
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "C_Cpp.errorSquiggles": "disabled"
 }
