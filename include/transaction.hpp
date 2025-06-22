@@ -5,7 +5,8 @@
 #include <string>
 #include <vector>
 #include <sstream>  // Para dividir strings por delimitadores
-#include <fstream>  // Para leitura e escrita em arquivos (ifstream, ofstream)
+#include <fstream>  // Para leitura e escrita em arquivos
+#include <dirent.h> // Para listar arquivos em diretórios
 using namespace std; 
 
 namespace smartbudget {

@@ -26,6 +26,20 @@ void AppUI::initialSetup() {
         filename = FileManager::generateUniqueFilename(filename);
         cout << "New file created: '" << filename << "'\n";
     } else if (initialOption == 2) {
+        cout << "\nAvailable CSV files:\n";
+        DIR* dir;
+        struct dirent* entry;
+        dir = opendir(".");
+        if (dir != nullptr) {
+            while ((entry = readdir(dir)) != nullptr) {
+                string filenameEntry = entry->d_name;
+                if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
+                    cout << "- " << filenameEntry << endl;
+                }
+            }
+            closedir(dir);
+        }
+
         cout << "Enter existing file name (without .csv): ";
         cin >> filename;
         filename = FileManager::ensureCSVExtension(filename);
@@ -67,6 +81,7 @@ void AppUI::showMainMenu() {
     cout << "8. Filter by amount range\n";
     cout << "9. Delete transaction file\n";
     cout << "10. Switch transaction file\n";
+    cout << "11. Edit transaction\n";
     cout << "0. Exit\n";
     cout << "Choose an option: ";
 }
@@ -83,6 +98,7 @@ void AppUI::handleMenuOption(int option) {
         case 8: filterByAmountRange(); break;
         case 9: deleteTransactionFile(); break;
         case 10: switchTransactionFile(); break;
+        case 11: editTransaction(); break;
         case 0: cout << "Exiting program...\n"; break;
         default: cout << "Invalid option!\n"; break;
     }
@@ -211,6 +227,20 @@ void AppUI::filterByAmountRange() {
 }
 
 void AppUI::deleteTransactionFile() {
+    cout << "\nAvailable CSV files:\n";
+    DIR* dir;
+    struct dirent* entry;
+    dir = opendir(".");
+    if (dir != nullptr) {
+        while ((entry = readdir(dir)) != nullptr) {
+            string filenameEntry = entry->d_name;
+            if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
+                cout << "- " << filenameEntry << endl;
+            }
+        }
+        closedir(dir);
+    }
+
     cout << "Enter the name of the file to delete (without .csv): ";
     string fileToDelete;
     cin >> fileToDelete;
@@ -255,6 +285,20 @@ void AppUI::switchTransactionFile() {
         filename = FileManager::generateUniqueFilename(filename);
         cout << "New file created: '" << filename << "'\n";
     } else if (fileOption == 2) {
+        cout << "\nAvailable CSV files:\n";
+        DIR* dir;
+        struct dirent* entry;
+        dir = opendir(".");
+        if (dir != nullptr) {
+            while ((entry = readdir(dir)) != nullptr) {
+                string filenameEntry = entry->d_name;
+                if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
+                    cout << "- " << filenameEntry << endl;
+                }
+            }
+            closedir(dir);
+        }
+
         cout << "Enter existing file name (without .csv): ";
         cin >> filename;
         filename = FileManager::ensureCSVExtension(filename);
@@ -277,5 +321,45 @@ void AppUI::switchTransactionFile() {
     } else {
         cout << "Invalid option.\n";
         filename.clear();
+    }
+}
+
+void AppUI::editTransaction() {
+    const auto& list = manager.getTransactions();
+    if (list.empty()) {
+        cout << "No transactions to edit.\n";
+        return;
+    }
+
+    int index;
+    cout << "Enter the index of the transaction to edit: ";
+    cin >> index;
+
+    if (index >= 0 && index < static_cast<int>(list.size())) {
+        cout << "\n=== Selected Transaction ===\n";
+        list[index].print();
+
+        double amount;
+        string type, category, date, description;
+
+        cout << "Enter new amount (current: " << list[index].getAmount() << "): ";
+        cin >> amount;
+        cout << "Enter new type (renda/despesa) (current: " << list[index].getType() << "): ";
+        cin >> type;
+        cout << "Enter new category (current: " << list[index].getCategory() << "): ";
+        cin >> category;
+        cin.ignore();
+        cout << "Enter new date (YYYY-MM-DD) (current: " << list[index].getDate() << "): ";
+        getline(cin, date);
+        cout << "Enter new description (current: " << list[index].getDescription() << "): ";
+        getline(cin, description);
+
+        Transaction updatedTransaction(amount, type, category, date, description);
+        manager.updateTransaction(index, updatedTransaction);
+        FileManager::saveToFile(manager.getTransactions(), filename);
+        cout << "Transaction updated and file saved.\n";
+
+    } else {
+        cout << "Invalid index! No transaction edited.\n";
     }
 }
