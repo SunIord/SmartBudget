@@ -27,6 +27,7 @@ private:
     void filterByAmountRange();
     void deleteTransactionFile();
     void switchTransactionFile();
+    void editTransaction();
 
 public:
     void run();

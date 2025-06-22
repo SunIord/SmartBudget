@@ -99,3 +99,21 @@ string FileManager::generateUniqueFilename(const string& baseName) {
 
     return filename;
 }
+
+vector<string> FileManager::listCSVFiles() {
+    vector<string> csvFiles;
+    DIR* dir;
+    struct dirent* ent;
+
+    dir = opendir(".");
+    if (dir != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            string filename(ent->d_name);
+            if (filename.length() >= 4 && filename.substr(filename.length() - 4) == ".csv") {
+                csvFiles.push_back(filename);
+            }
+        }
+        closedir(dir);
+    }
+    return csvFiles;
+}

@@ -16,6 +16,7 @@ public:
     static bool fileExists(const string& filename);
     static bool deleteFile(const string& filename);
     static string generateUniqueFilename(const string& baseName); 
+    static vector<string> listCSVFiles();
 };
 
 }
