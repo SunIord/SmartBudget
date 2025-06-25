@@ -6,13 +6,11 @@
 #include "budgetAnalyzer.hpp"
 #include "fileManager.hpp"
 
-namespace smartbudget {
-
 class AppUI {
 private:
     TransactionManager manager;
     BudgetAnalyzer analyzer;
-    string filename;
+    std::string filename;
 
     void initialSetup();
     void showMainMenu();
@@ -32,7 +30,5 @@ private:
 public:
     void run();
 };
-
-}
 
 #endif

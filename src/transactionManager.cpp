@@ -1,5 +1,4 @@
 #include "transactionManager.hpp"
-using namespace smartbudget;
 
 void TransactionManager::addTransaction(const Transaction& t) {
     transactions.push_back(t);
@@ -13,12 +12,12 @@ bool TransactionManager::removeTransaction(size_t index) {
     return false;
 }
 
-const vector<Transaction>& TransactionManager::getTransactions() const {
+const std::vector<Transaction>& TransactionManager::getTransactions() const {
     return transactions;
 }
 
-vector<Transaction> TransactionManager::filterByType(const string& type) const {
-    vector<Transaction> filtered;
+std::vector<Transaction> TransactionManager::filterByType(const std::string& type) const {
+    std::vector<Transaction> filtered;
     for (const auto& transaction : transactions) {
         if (transaction.getType() == type) {
             filtered.push_back(transaction);
@@ -27,8 +26,8 @@ vector<Transaction> TransactionManager::filterByType(const string& type) const {
     return filtered;
 }
 
-vector<Transaction> TransactionManager::filterByCategory(const string& category) const {
-    vector<Transaction> filtered;
+std::vector<Transaction> TransactionManager::filterByCategory(const std::string& category) const {
+    std::vector<Transaction> filtered;
     for (const auto& transaction : transactions) {
         if (transaction.getCategory() == category) {
             filtered.push_back(transaction);
@@ -37,11 +36,11 @@ vector<Transaction> TransactionManager::filterByCategory(const string& category)
     return filtered;
 }
 
-vector<Transaction> TransactionManager::filterByDateRange(const string& startDate, const string& endDate) const {
-    vector<Transaction> filtered;
+std::vector<Transaction> TransactionManager::filterByDateRange(const std::string& startDate, const std::string& endDate) const {
+    std::vector<Transaction> filtered;
 
     for (const auto& transaction : transactions) {
-        const string& date = transaction.getDate();
+        const std::string& date = transaction.getDate();
         if (date >= startDate && date <= endDate) {
             filtered.push_back(transaction);
         }
@@ -50,8 +49,8 @@ vector<Transaction> TransactionManager::filterByDateRange(const string& startDat
     return filtered;
 }
 
-vector<Transaction> TransactionManager::filterByAmountRange(double minAmount, double maxAmount) const {
-    vector<Transaction> filtered;
+std::vector<Transaction> TransactionManager::filterByAmountRange(double minAmount, double maxAmount) const {
+    std::vector<Transaction> filtered;
 
     for (const auto& transaction : transactions) {
         if (transaction.getAmount() >= minAmount && transaction.getAmount() <= maxAmount) {

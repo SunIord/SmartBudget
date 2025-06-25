@@ -3,7 +3,6 @@
 // ./smartbudget
 
 #include "appUI.hpp"
-using namespace smartbudget;
 
 int main() {
     AppUI app;
