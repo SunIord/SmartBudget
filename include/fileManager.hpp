@@ -3,22 +3,18 @@
 
 #include "transaction.hpp"
 
-namespace smartbudget {
-
 class FileManager {
 private:
-    static vector<string> parseCSVLine(const string& line);
+    static std::vector<std::string> parseCSVLine(const std::string& line);
 
 public:
-    static bool saveToFile(const vector<Transaction>& transactions, const string& filename);
-    static bool loadFromFile(vector<Transaction>& transactions, const string& filename);
-    static string ensureCSVExtension(const string& filename); 
-    static bool fileExists(const string& filename);
-    static bool deleteFile(const string& filename);
-    static string generateUniqueFilename(const string& baseName); 
-    static vector<string> listCSVFiles();
+    static bool saveToFile(const std::vector<Transaction>& transactions, const std::string& filename);
+    static bool loadFromFile(std::vector<Transaction>& transactions, const std::string& filename);
+    static std::string ensureCSVExtension(const std::string& filename); 
+    static bool fileExists(const std::string& filename);
+    static bool deleteFile(const std::string& filename);
+    static std::string generateUniqueFilename(const std::string& baseName); 
+    static std::vector<std::string> listCSVFiles();
 };
-
-}
 
 #endif

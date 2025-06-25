@@ -1,5 +1,8 @@
 {
     "cmake.generator": "MinGW Makefiles",
     "cmake.sourceDirectory": "${workspaceFolder}",
-    "C_Cpp.errorSquiggles": "disabled"
+    "C_Cpp.errorSquiggles": "disabled",
+    "files.associations": {
+        "vector": "cpp"
+    }
 }
