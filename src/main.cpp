@@ -5,17 +5,21 @@
 #include "backends/imgui_impl_opengl3.h"
 #include <iostream>
 #include <string>
+
+#ifdef _WIN32
 #include <Windows.h>
-#include <Dwmapi.h>
 #include <windowsx.h>
+#include <Dwmapi.h>
+#endif
+
 #include "../include/transaction.hpp"
 #include "../include/transactionManager.hpp"
 #include "../include/budgetAnalyzer.hpp"
 
 int main()
 {
-    smartbudget::TransactionManager manager;
-    smartbudget::BudgetAnalyzer analyzer;
+    TransactionManager manager;
+    BudgetAnalyzer analyzer;
     // Inicializa GLFW
     if (!glfwInit())
     {
@@ -143,11 +147,11 @@ int main()
                 // Aqui você pode adicionar a lógica para calcular o total por tipo (renda/despesa)
                 ImGui::Text("Total por tipo: R$ 300,00"); // Exemplo estático
             }
-            if{ (ImGui::Button("Filtrar por data"))
+            if(ImGui::Button("Filtrar por data"))
             {
                 
             }
-            if{ (ImGui::Button("Filtrar por valor"))
+            if(ImGui::Button("Filtrar por valor"))
             {
                 
             }
