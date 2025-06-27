@@ -98,6 +98,10 @@ int main()
             {
                 selected_menu = 2; // Muda para o menu de saldo
             }
+            if(ImGui::Button("Gerenciar Conta"))
+            {
+                selected_menu = 3; // Muda para o menu de gerenciar conta
+            }
             if (ImGui::Button("Sair"))
             {
                 glfwSetWindowShouldClose(window, true);
@@ -110,10 +114,15 @@ int main()
             if (ImGui::Button("Adicionar Transação"))
             {
                 // Aqui você pode adicionar a lógica para adicionar uma transação
-                selected_menu = 3; // Muda para o menu de adicionar transação
+                selected_menu = 4; // Muda para o menu de adicionar transação
             }
             if (ImGui::Button("Listar Transações"))
             {
+                // Muda para o menu de listar transações
+            }
+            if( ImGui::Button("Remover Transação"))
+            {
+                 // Muda para o menu de editar transação
             }
             if (ImGui::Button("Voltar"))
             {
@@ -123,11 +132,24 @@ int main()
             break;
         case 2:
             ImGui::Begin("Relatório", nullptr, window_flags);
-            ImGui::Text("Visualizar saldo total.");
-            if (ImGui::Button("Calcular Saldo"))
+            ImGui::Text("Visualizar saldo total por categorias");
+            if (ImGui::Button("Total por Categoria"))
             {
-                // Aqui você pode adicionar a lógica para calcular o saldo
-                ImGui::Text("Saldo total: R$ 1000,00"); // Exemplo estático
+                // Aqui você pode adicionar a lógica para calcular o total por categoria
+                ImGui::Text("Total por categoria: R$ 500,00"); // Exemplo estático
+            }
+            if (ImGui::Button("Total por tipo"))
+            {
+                // Aqui você pode adicionar a lógica para calcular o total por tipo (renda/despesa)
+                ImGui::Text("Total por tipo: R$ 300,00"); // Exemplo estático
+            }
+            if{ (ImGui::Button("Filtrar por data"))
+            {
+                
+            }
+            if{ (ImGui::Button("Filtrar por valor"))
+            {
+                
             }
             if (ImGui::Button("Voltar"))
             {
@@ -136,6 +158,25 @@ int main()
             ImGui::End();
             break;
         case 3:
+            ImGui::Begin("Gerenciar Conta", nullptr, window_flags);
+            ImGui::Text("Gerenciar sua conta.");
+            if (ImGui::Button("Deletar conta"))
+            {
+                // Aqui você pode adicionar a lógica para remover o arquivo de transações
+                // Exemplo: manager.removeTransactionsFile();
+                ImGui::Text("Arquivo de transações removido com sucesso!");
+            }
+            if( ImGui::Button("Trocar Conta"))
+            {
+
+            }
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 0; // Volta ao menu principal
+            }
+            ImGui::End();
+            break;
+        case 4:
             ImGui::Begin("Adicionar Transação", nullptr, window_flags);
             ImGui::Text("Adicionar uma nova transação.");
             static char amount[64] = "";
