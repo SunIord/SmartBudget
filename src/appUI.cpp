@@ -1,4 +1,4 @@
-#include "AppUI.hpp"
+#include "appUI.hpp"
 
 void AppUI::run() {
     initialSetup();

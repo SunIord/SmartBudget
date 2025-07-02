@@ -4,7 +4,7 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include <iostream>
-#include <string>
+//#include <string>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -15,11 +15,13 @@
 #include "../include/transaction.hpp"
 #include "../include/transactionManager.hpp"
 #include "../include/budgetAnalyzer.hpp"
+#include "../include/appUI.hpp"
 
 int main()
 {
     TransactionManager manager;
     BudgetAnalyzer analyzer;
+    AppUI app;
     // Inicializa GLFW
     if (!glfwInit())
     {
@@ -97,7 +99,6 @@ int main()
             {
                 selected_menu = 1; // Muda para o menu de transações
             }
-            ImGui::SameLine();
             if (ImGui::Button("Relatório"))
             {
                 selected_menu = 2; // Muda para o menu de saldo
@@ -110,6 +111,7 @@ int main()
             {
                 glfwSetWindowShouldClose(window, true);
             }
+            ImGui::Spacing();
             ImGui::End();
             break;
         case 1:
@@ -122,12 +124,13 @@ int main()
             }
             if (ImGui::Button("Listar Transações"))
             {
-                // Muda para o menu de listar transações
+                selected_menu = 5; // Muda para o menu de listar transações
             }
             if( ImGui::Button("Remover Transação"))
             {
-                 // Muda para o menu de editar transação
+                selected_menu = 6;  // Muda para o menu de editar transação
             }
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 0; // Volta ao menu principal
@@ -135,26 +138,26 @@ int main()
             ImGui::End();
             break;
         case 2:
+            static double total = 0;
+            static int balance_type = 0;
+            static char input_balance_type[42] = "";
+            static char balance_name[2][10] = {"categoria", "tipo"};
             ImGui::Begin("Relatório", nullptr, window_flags);
             ImGui::Text("Visualizar saldo total por categorias");
-            if (ImGui::Button("Total por Categoria"))
-            {
-                // Aqui você pode adicionar a lógica para calcular o total por categoria
-                ImGui::Text("Total por categoria: R$ 500,00"); // Exemplo estático
+            ImGui::RadioButton("Categoria", &balance_type, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Tipo", &balance_type, 1);
+            ImGui::InputText("Tipo/Categoria", input_balance_type, IM_ARRAYSIZE(input_balance_type));
+            if(ImGui::Button("Gerar saldo total")){
+                if(balance_type == 0)
+                {
+                    //total =  BudgetAnalyzer::analyzer.calculateTotalByCategory(TransactionManager::manager.getTransactions(), input_balance_type);
+                }else if(balance_type == 1) {
+                    //total = BudgetAnalyzer::analyzer.calculateTotalByType(TransactionManager::manager.getTransactions(), input_balance_type);
+                }    
             }
-            if (ImGui::Button("Total por tipo"))
-            {
-                // Aqui você pode adicionar a lógica para calcular o total por tipo (renda/despesa)
-                ImGui::Text("Total por tipo: R$ 300,00"); // Exemplo estático
-            }
-            if(ImGui::Button("Filtrar por data"))
-            {
-                
-            }
-            if(ImGui::Button("Filtrar por valor"))
-            {
-                
-            }
+            ImGui::Text("Total por %s: %f", balance_name[balance_type], total);
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 0; // Volta ao menu principal
@@ -164,15 +167,17 @@ int main()
         case 3:
             ImGui::Begin("Gerenciar Conta", nullptr, window_flags);
             ImGui::Text("Gerenciar sua conta.");
+            if(ImGui::Button("Criar conta"))
+            {
+                selected_menu = 7; // menu de criação de conta
+            }
             if (ImGui::Button("Deletar conta"))
             {
-                // Aqui você pode adicionar a lógica para remover o arquivo de transações
-                // Exemplo: manager.removeTransactionsFile();
-                ImGui::Text("Arquivo de transações removido com sucesso!");
+                selected_menu = 8;
             }
             if( ImGui::Button("Trocar Conta"))
             {
-
+                selected_menu = 9;
             }
             if (ImGui::Button("Voltar"))
             {
@@ -219,12 +224,86 @@ int main()
                 memset(date, 0, sizeof(date));
                 memset(description, 0, sizeof(description));
             }
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 1; // Volta ao menu de transações
             }
             ImGui::End();
             break;
+        case 5:
+            static int transaction_type = 0;
+            static char input_initial_date[10] = "";
+            static char input_final_date[10] = "";
+            static char input_minimum_value[30] = "";
+            static char input_maximum_value[30] = "";
+            // char transaction_type_name[2][10] = {"data", "valor"}
+            
+            ImGui::Begin("Listar Transações", nullptr, window_flags);
+            ImGui::Text("Listar Transações");
+            ImGui::RadioButton("Data", &transaction_type, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Quantidade", &transaction_type, 1);
+            if(transaction_type == 0)
+            {
+                ImGui::InputText("Data inicial", input_initial_date, IM_ARRAYSIZE(input_initial_date));
+                ImGui::InputText("Data final", input_final_date, IM_ARRAYSIZE(input_final_date));
+                if(ImGui::Button("Listar Transações")){
+                    //auto results = manager.filterByDateRange(input_initial_date, input_final_date);
+                }
+            }
+            if(transaction_type == 1)
+            {
+                ImGui::InputText("Valor mínimo", input_minimum_value, IM_ARRAYSIZE(input_minimum_value));
+                ImGui::InputText("Valor máximo", input_maximum_value, IM_ARRAYSIZE(input_maximum_value));
+                if(ImGui::Button("Listar Transações")){
+                    //auto results = manager.filterByDateRange(input_minimum_value,input_maximum_value);
+                }
+            }
+            ImGui::Spacing();
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 1; // Volta ao menu principal
+            }
+            ImGui::End();
+            break;
+        case 6:
+            ImGui::Begin("Remover Transações", nullptr, window_flags);
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 1; // Volta ao menu principal
+            }
+            ImGui::Spacing();
+            ImGui::End();
+            break;
+        case 7:
+            ImGui::Begin("Criar Conta", nullptr, window_flags);
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 3; // Volta ao Gerenciamento de conta
+            }
+            ImGui::Spacing();
+            ImGui::End();
+            break;
+        case 8:
+            ImGui::Begin("Deletar Conta", nullptr, window_flags);
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 3; // Volta ao Gerenciamento de conta
+            }
+            ImGui::Spacing();
+            ImGui::End();
+            break;
+        case 9:
+            ImGui::Begin("Trocar Conta", nullptr, window_flags);
+            if (ImGui::Button("Voltar"))
+            {
+                selected_menu = 3; // Volta ao Gerenciamento de conta
+            }
+            ImGui::Spacing();
+            ImGui::End();
+            break;
+
         }
 
         ImGui::Render();
