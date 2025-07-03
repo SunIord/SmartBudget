@@ -35,6 +35,11 @@ _Controle suas finanças sem complicação._
 - **FileManager**
   - Leitura e gravação dos dados
 ---
+# Pastas
+```bash
+tree ../ -d
+````
+---
 ### Equipe
 
 - **Marcello Menezes** <meam<meam>>

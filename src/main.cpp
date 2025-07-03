@@ -1,10 +1,9 @@
-#define GLFW_DLL
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include <iostream>
-//#include <string>
+#include <string>
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -15,13 +14,12 @@
 #include "../include/transaction.hpp"
 #include "../include/transactionManager.hpp"
 #include "../include/budgetAnalyzer.hpp"
-#include "../include/appUI.hpp"
+#include "../include/fileManager.hpp"
 
 int main()
 {
     TransactionManager manager;
     BudgetAnalyzer analyzer;
-    AppUI app;
     // Inicializa GLFW
     if (!glfwInit())
     {
@@ -87,7 +85,7 @@ int main()
         ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
 #endif
-
+        static std::string filename;
         // Janela principal
         switch (selected_menu)
         {
@@ -263,44 +261,58 @@ int main()
             ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
-                selected_menu = 1; // Volta ao menu principal
+                selected_menu = 1; // Volta ao menu anterior
             }
             ImGui::End();
             break;
         case 6:
             ImGui::Begin("Remover Transações", nullptr, window_flags);
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 1; // Volta ao menu principal
             }
-            ImGui::Spacing();
             ImGui::End();
             break;
         case 7:
+            static char filename_input[20] = "";
             ImGui::Begin("Criar Conta", nullptr, window_flags);
+            ImGui::InputTextWithHint("Nome", "Nome", filename_input,IM_ARRAYSIZE(filename_input));
+            if(ImGui::Button("Gerar Arquivo")){
+                filename = filename_input;
+                filename = FileManager::generateUniqueFilename(filename);
+                ImGui::OpenPopup("confirm_archive_generation");
+            }
+            if(ImGui::BeginPopup("confirm_archive_generation")){
+                ImGui::TextWrapped("Arquivo gerado com sucesso!");
+                if (ImGui::Button("Fechar"))
+                    ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 3; // Volta ao Gerenciamento de conta
             }
-            ImGui::Spacing();
             ImGui::End();
             break;
         case 8:
             ImGui::Begin("Deletar Conta", nullptr, window_flags);
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 3; // Volta ao Gerenciamento de conta
             }
-            ImGui::Spacing();
             ImGui::End();
             break;
         case 9:
             ImGui::Begin("Trocar Conta", nullptr, window_flags);
+            
+            ImGui::Spacing();
             if (ImGui::Button("Voltar"))
             {
                 selected_menu = 3; // Volta ao Gerenciamento de conta
             }
-            ImGui::Spacing();
             ImGui::End();
             break;
 
