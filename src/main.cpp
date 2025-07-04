@@ -2,70 +2,64 @@
 #include "imgui.h"
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include <iostream>
-#include <string>
 
 #ifdef _WIN32
 #include <Windows.h>
-#include <windowsx.h>
 #include <Dwmapi.h>
+#include <windowsx.h>
 #endif
 
-#include "../include/transaction.hpp"
-#include "../include/transactionManager.hpp"
-#include "../include/budgetAnalyzer.hpp"
-#include "../include/fileManager.hpp"
+#include <map>
+#include "appUI.hpp"
 
 int main()
 {
-    TransactionManager manager;
-    BudgetAnalyzer analyzer;
-    // Inicializa GLFW
+    // Inicialização do GLFW
     if (!glfwInit())
     {
         std::cerr << "Erro ao inicializar GLFW\n";
         return -1;
     }
 
-    // Configura contexto OpenGL
+    // Configuração da janela
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    // glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Torna a janela sem borda
 
-    GLFWwindow *window = glfwCreateWindow(320, 460, "SmartBudget", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(320, 460, "SmartBudget", nullptr, nullptr);
     if (!window)
     {
-        std::cerr << "Erro ao criar janela GLFW\n";
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // vsync
+    glfwSwapInterval(1);
 
-    // Inicializa Dear ImGui
+    // Setup ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO &io = ImGui::GetIO();
-    (void)io;
-
-    ImGui::StyleColorsDark(); // Tema escuro
-
-    // Inicializa os backends
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
     // Variáveis de estado
-    int selected_menu = 0; // Variável para controlar o menu selecionado
-    /*
-     * 0 - Menu Principal
-     * 1 - Menu de Transações
-     * 2 - Menu de Relatório
-     * 3 - Adicionar Transação
-     * 4 - Listar Transações
-     * 5 - Visualizar Saldo
-     * 6 - Calcular Saldo
-     */
+    TransactionManager manager;
+    BudgetAnalyzer analyzer;
+    FileManager fileManager;
+    std::string filename;
+    bool showFileDialog = true;
+    int fileDialogOption = 0;
+    char newFilename[256] = "";
+    int selectedMenu = 0;
+    double currentBalance = 0.0;
+    bool showBalance = false;
+    static char amount[64] = "";
+    static char category[64] = "";
+    static char date[64] = "";
+    static char description[256] = "";
+    static int transactionType = 0;
+
     // Loop principal
     while (!glfwWindowShouldClose(window))
     {
@@ -74,250 +68,516 @@ int main()
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar;
-
-#ifdef IMGUI_HAS_VIEWPORT
-        ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->GetWorkPos());
-        ImGui::SetNextWindowSize(viewport->GetWorkSize());
-        ImGui::SetNextWindowViewport(viewport->ID);
-#else
-        ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f));
-        ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-#endif
-        static std::string filename;
-        // Janela principal
-        switch (selected_menu)
+        // Diálogo de seleção de arquivo
+        if (showFileDialog)
         {
-        case 0:
-            ImGui::Begin("Menu Principal", nullptr, window_flags);
-            // ImGui::ShowDemoWindow(); // Exibe a janela de demonstração do ImGui
-
-            if (ImGui::Button("Transações"))
+            ImGui::OpenPopup("Seleção de Arquivo");
+            if (ImGui::BeginPopupModal("Seleção de Arquivo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
             {
-                selected_menu = 1; // Muda para o menu de transações
-            }
-            if (ImGui::Button("Relatório"))
-            {
-                selected_menu = 2; // Muda para o menu de saldo
-            }
-            if(ImGui::Button("Gerenciar Conta"))
-            {
-                selected_menu = 3; // Muda para o menu de gerenciar conta
-            }
-            if (ImGui::Button("Sair"))
-            {
-                glfwSetWindowShouldClose(window, true);
-            }
-            ImGui::Spacing();
-            ImGui::End();
-            break;
-        case 1:
-            ImGui::Begin("Gerenciar Transações", nullptr, window_flags);
-            ImGui::Text("Gerenciar suas transações financeiras.");
-            if (ImGui::Button("Adicionar Transação"))
-            {
-                // Aqui você pode adicionar a lógica para adicionar uma transação
-                selected_menu = 4; // Muda para o menu de adicionar transação
-            }
-            if (ImGui::Button("Listar Transações"))
-            {
-                selected_menu = 5; // Muda para o menu de listar transações
-            }
-            if( ImGui::Button("Remover Transação"))
-            {
-                selected_menu = 6;  // Muda para o menu de editar transação
-            }
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 0; // Volta ao menu principal
-            }
-            ImGui::End();
-            break;
-        case 2:
-            static double total = 0;
-            static int balance_type = 0;
-            static char input_balance_type[42] = "";
-            static char balance_name[2][10] = {"categoria", "tipo"};
-            ImGui::Begin("Relatório", nullptr, window_flags);
-            ImGui::Text("Visualizar saldo total por categorias");
-            ImGui::RadioButton("Categoria", &balance_type, 0);
-            ImGui::SameLine();
-            ImGui::RadioButton("Tipo", &balance_type, 1);
-            ImGui::InputText("Tipo/Categoria", input_balance_type, IM_ARRAYSIZE(input_balance_type));
-            if(ImGui::Button("Gerar saldo total")){
-                if(balance_type == 0)
+                ImGui::Text("Escolha uma opção:");
+                
+                if (ImGui::Button("Criar Novo Arquivo"))
                 {
-                    //total =  BudgetAnalyzer::analyzer.calculateTotalByCategory(TransactionManager::manager.getTransactions(), input_balance_type);
-                }else if(balance_type == 1) {
-                    //total = BudgetAnalyzer::analyzer.calculateTotalByType(TransactionManager::manager.getTransactions(), input_balance_type);
-                }    
-            }
-            ImGui::Text("Total por %s: %f", balance_name[balance_type], total);
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 0; // Volta ao menu principal
-            }
-            ImGui::End();
-            break;
-        case 3:
-            ImGui::Begin("Gerenciar Conta", nullptr, window_flags);
-            ImGui::Text("Gerenciar sua conta.");
-            if(ImGui::Button("Criar conta"))
-            {
-                selected_menu = 7; // menu de criação de conta
-            }
-            if (ImGui::Button("Deletar conta"))
-            {
-                selected_menu = 8;
-            }
-            if( ImGui::Button("Trocar Conta"))
-            {
-                selected_menu = 9;
-            }
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 0; // Volta ao menu principal
-            }
-            ImGui::End();
-            break;
-        case 4:
-            ImGui::Begin("Adicionar Transação", nullptr, window_flags);
-            ImGui::Text("Adicionar uma nova transação.");
-            static char amount[64] = "";
-            static char type[64] = "";
-            static char category[64] = "";
-            static char date[64] = "";
-            static char description[256] = "";
-            static int radio_selection = 0;
-
-            ImGui::InputTextWithHint("Valor", "R$0,00", amount, IM_ARRAYSIZE(amount), ImGuiInputTextFlags_CharsDecimal);
-            ImGui::RadioButton("Despesa", &radio_selection, 0);
-            ImGui::SameLine();
-            ImGui::RadioButton("Renda", &radio_selection, 1);
-            // ImGui::InputText("Tipo (renda/despesa)", type, IM_ARRAYSIZE(type));
-            ImGui::InputTextWithHint("Categoria", "Saúde, Lazer, Casa...", category, IM_ARRAYSIZE(category));
-            ImGui::InputTextWithHint("Data", "(YYYY-MM-DD)", date, IM_ARRAYSIZE(date));
-            ImGui::InputTextMultiline("Descrição", description, IM_ARRAYSIZE(description));
-            static int clicked = 0;
-            if (ImGui::Button("Salvar"))
-            {
-                // Aqui você pode adicionar a lógica para salvar a transação
-                // smartbudget::Transaction nova(std::stod(amount), type, category, date, description);
-                // manager.addTransaction(nova);
-
-                clicked++;
-                if (clicked & 1)
+                    fileDialogOption = 1;
+                    memset(newFilename, 0, sizeof(newFilename));
+                }
+                
+                ImGui::SameLine();
+                
+                if (ImGui::Button("Carregar Arquivo Existente"))
                 {
-                    ImGui::SameLine();
-                    ImGui::Text("Transação adicionada com sucesso!");
+                    fileDialogOption = 2;
                 }
 
-                // Limpa os campos após salvar
-                memset(amount, 0, sizeof(amount));
-                memset(type, 0, sizeof(type));
-                memset(category, 0, sizeof(category));
-                memset(date, 0, sizeof(date));
-                memset(description, 0, sizeof(description));
-            }
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 1; // Volta ao menu de transações
-            }
-            ImGui::End();
-            break;
-        case 5:
-            static int transaction_type = 0;
-            static char input_initial_date[10] = "";
-            static char input_final_date[10] = "";
-            static char input_minimum_value[30] = "";
-            static char input_maximum_value[30] = "";
-            // char transaction_type_name[2][10] = {"data", "valor"}
-            
-            ImGui::Begin("Listar Transações", nullptr, window_flags);
-            ImGui::Text("Listar Transações");
-            ImGui::RadioButton("Data", &transaction_type, 0);
-            ImGui::SameLine();
-            ImGui::RadioButton("Quantidade", &transaction_type, 1);
-            if(transaction_type == 0)
-            {
-                ImGui::InputText("Data inicial", input_initial_date, IM_ARRAYSIZE(input_initial_date));
-                ImGui::InputText("Data final", input_final_date, IM_ARRAYSIZE(input_final_date));
-                if(ImGui::Button("Listar Transações")){
-                    //auto results = manager.filterByDateRange(input_initial_date, input_final_date);
+                if (fileDialogOption == 1)
+                {
+                    ImGui::InputText("Nome do Arquivo", newFilename, IM_ARRAYSIZE(newFilename));
+                    if (ImGui::Button("Criar") && strlen(newFilename) > 0)
+                    {
+                        filename = fileManager.generateUniqueFilename(newFilename);
+                        showFileDialog = false;
+                        ImGui::CloseCurrentPopup();
+                    }
                 }
-            }
-            if(transaction_type == 1)
-            {
-                ImGui::InputText("Valor mínimo", input_minimum_value, IM_ARRAYSIZE(input_minimum_value));
-                ImGui::InputText("Valor máximo", input_maximum_value, IM_ARRAYSIZE(input_maximum_value));
-                if(ImGui::Button("Listar Transações")){
-                    //auto results = manager.filterByDateRange(input_minimum_value,input_maximum_value);
+                else if (fileDialogOption == 2)
+                {
+                    auto files = fileManager.listCSVFiles();
+                    if (files.empty())
+                    {
+                        ImGui::Text("Nenhum arquivo CSV encontrado");
+                    }
+                    else
+                    {
+                        for (const auto& file : files)
+                        {
+                            if (ImGui::Selectable(file.c_str()))
+                            {
+                                filename = file;
+                                std::vector<Transaction> loadedTransactions;
+                                if (fileManager.loadFromFile(loadedTransactions, filename))
+                                {
+                                    manager = TransactionManager(); // Reset
+                                    for (const auto& t : loadedTransactions)
+                                    {
+                                        manager.addTransaction(t);
+                                    }
+                                }
+                                showFileDialog = false;
+                                ImGui::CloseCurrentPopup();
+                            }
+                        }
+                    }
                 }
-            }
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 1; // Volta ao menu anterior
-            }
-            ImGui::End();
-            break;
-        case 6:
-            ImGui::Begin("Remover Transações", nullptr, window_flags);
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 1; // Volta ao menu principal
-            }
-            ImGui::End();
-            break;
-        case 7:
-            static char filename_input[20] = "";
-            ImGui::Begin("Criar Conta", nullptr, window_flags);
-            ImGui::InputTextWithHint("Nome", "Nome", filename_input,IM_ARRAYSIZE(filename_input));
-            if(ImGui::Button("Gerar Arquivo")){
-                filename = filename_input;
-                filename = FileManager::generateUniqueFilename(filename);
-                ImGui::OpenPopup("confirm_archive_generation");
-            }
-            if(ImGui::BeginPopup("confirm_archive_generation")){
-                ImGui::TextWrapped("Arquivo gerado com sucesso!");
-                if (ImGui::Button("Fechar"))
-                    ImGui::CloseCurrentPopup();
+
                 ImGui::EndPopup();
             }
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
+        }
+        else
+        {
+            // Menus principais
+            switch (selectedMenu)
             {
-                selected_menu = 3; // Volta ao Gerenciamento de conta
-            }
-            ImGui::End();
-            break;
-        case 8:
-            ImGui::Begin("Deletar Conta", nullptr, window_flags);
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
+            case 0: // Menu Principal
+                {
+                    ImGui::Begin("Menu Principal", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                    
+                    if (!filename.empty())
+                        ImGui::Text("Arquivo: %s", filename.c_str());
+                    
+                    if (ImGui::Button("Transações", ImVec2(200, 50)))
+                        selectedMenu = 1;
+                    
+                    if (ImGui::Button("Relatórios", ImVec2(200, 50)))
+                        selectedMenu = 2;
+                    
+                    if (ImGui::Button("Trocar Arquivo", ImVec2(200, 50)))
+                        showFileDialog = true;
+
+                    if (ImGui::Button("Excluir Arquivo", ImVec2(200, 50)))
+                        selectedMenu = 12;
+
+                    if (ImGui::Button("Sair", ImVec2(200, 50)))
+                        glfwSetWindowShouldClose(window, true); 
+                    
+                    ImGui::End();
+                }
+                break;
+
+            case 1: // Menu Transações
+                {
+                    ImGui::Begin("Transações", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                    
+                    if (ImGui::Button("Adicionar Transação"))
+                    {
+                        selectedMenu = 3;
+                        memset(amount, 0, sizeof(amount));
+                        memset(category, 0, sizeof(category));
+                        memset(date, 0, sizeof(date));
+                        memset(description, 0, sizeof(description));
+                    }
+                    
+                    if (ImGui::Button("Listar Transações"))
+                        selectedMenu = 4;
+
+                    if (ImGui::Button("Editar Transação"))
+                        selectedMenu = 7;
+
+                    if (ImGui::Button("Remover Transação"))
+                        selectedMenu = 8;
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 0;
+                    
+                    ImGui::End();
+                }
+                break;
+
+            case 2: // Menu Relatórios
             {
-                selected_menu = 3; // Volta ao Gerenciamento de conta
+                ImGui::Begin("Relatórios", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                if (ImGui::Button("Saldo Total"))
+                {
+                    currentBalance = analyzer.calculateBalance(manager.getTransactions());
+                    selectedMenu = 6;
+                }
+
+                if (ImGui::Button("Total por Categoria"))
+                    selectedMenu = 5;
+
+                if (ImGui::Button("Filtrar por Data"))
+                    selectedMenu = 10;
+
+                if (ImGui::Button("Filtrar por Valor"))
+                    selectedMenu = 9;
+
+                if (ImGui::Button("Total por Tipo"))
+                    selectedMenu = 11;
+
+                if (ImGui::Button("Voltar"))
+                    selectedMenu = 0;
+
+                ImGui::End();
             }
-            ImGui::End();
-            break;
-        case 9:
-            ImGui::Begin("Trocar Conta", nullptr, window_flags);
-            
-            ImGui::Spacing();
-            if (ImGui::Button("Voltar"))
-            {
-                selected_menu = 3; // Volta ao Gerenciamento de conta
-            }
-            ImGui::End();
             break;
 
+            case 3: // Adicionar Transação
+                {
+                    ImGui::Begin("Nova Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                    
+                    ImGui::InputText("Valor (R$)", amount, IM_ARRAYSIZE(amount), ImGuiInputTextFlags_CharsDecimal);
+                    ImGui::RadioButton("Despesa", &transactionType, 0); ImGui::SameLine();
+                    ImGui::RadioButton("Renda", &transactionType, 1);
+                    ImGui::InputText("Categoria", category, IM_ARRAYSIZE(category));
+                    ImGui::InputText("Data (AAAA-MM-DD)", date, IM_ARRAYSIZE(date));
+                    ImGui::InputTextMultiline("Descrição", description, IM_ARRAYSIZE(description));
+                    
+                    if (ImGui::Button("Salvar") && strlen(amount) > 0)
+                    {
+                        Transaction newTrans(
+                            std::stod(amount),
+                            (transactionType == 0) ? "despesa" : "renda",
+                            category,
+                            date,
+                            description
+                        );
+                        manager.addTransaction(newTrans);
+                        fileManager.saveToFile(manager.getTransactions(), filename);
+                        selectedMenu = 1;
+                    }
+                    
+                    ImGui::SameLine();
+                    if (ImGui::Button("Cancelar"))
+                        selectedMenu = 1;
+                    
+                    ImGui::End();
+                }
+                break;
+
+            case 4: // Listar Transações
+                {
+                    ImGui::Begin("Lista de Transações", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                    
+                    const auto& transactions = manager.getTransactions();
+                    if (transactions.empty())
+                    {
+                        ImGui::Text("Nenhuma transação cadastrada.");
+                    }
+                    else
+                    {
+                        if (ImGui::BeginTable("Transações", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg))
+                        {
+                            ImGui::TableSetupColumn("ID");
+                            ImGui::TableSetupColumn("Valor");
+                            ImGui::TableSetupColumn("Tipo");
+                            ImGui::TableSetupColumn("Data");
+                            ImGui::TableSetupColumn("Categoria");
+                            ImGui::TableHeadersRow();
+
+                            for (size_t i = 0; i < transactions.size(); ++i)
+                            {
+                                const auto& t = transactions[i];
+                                ImGui::TableNextRow();
+                                ImGui::TableNextColumn(); ImGui::Text("%d", (int)i);
+                                ImGui::TableNextColumn(); ImGui::Text("R$ %.2f", t.getAmount());
+                                ImGui::TableNextColumn(); ImGui::Text("%s", t.getType().c_str());
+                                ImGui::TableNextColumn(); ImGui::Text("%s", t.getDate().c_str());
+                                ImGui::TableNextColumn(); ImGui::Text("%s", t.getCategory().c_str());
+                            }
+                            ImGui::EndTable();
+                        }
+                    }
+                    
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 1;
+                    
+                    ImGui::End();
+                }
+                break;
+
+            case 5: // Relatório por Categoria
+                {
+                    ImGui::Begin("Totais por Categoria", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+                    
+                    std::map<std::string, double> categoryTotals;
+                    const auto& transactions = manager.getTransactions();
+                    
+                    for (const auto& t : transactions)
+                    {
+                        if (t.getType() == "despesa")
+                            categoryTotals[t.getCategory()] -= t.getAmount();
+                        else
+                            categoryTotals[t.getCategory()] += t.getAmount();
+                    }
+                    
+                    for (const auto& [cat, total] : categoryTotals)
+                    {
+                        ImGui::Text("%s: R$ %.2f", cat.c_str(), total);
+                    }
+                    
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 2;
+                    
+                    ImGui::End();
+                }
+                break;
+
+            case 6: // Exibir Saldo Total
+                {
+                    ImGui::Begin("Saldo Total", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                    ImGui::Text("Saldo atual calculado:");
+                    ImGui::Separator();
+                    ImGui::Text("R$ %.2f", currentBalance);
+                    ImGui::Separator();
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 2;
+
+                    ImGui::End();
+                }
+                break;
+
+            case 7: // Editar Transação
+            {
+                ImGui::Begin("Editar Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                const auto& list = manager.getTransactions();
+                static int indexToEdit = 0;
+
+                if (list.empty()) {
+                    ImGui::Text("Nenhuma transação cadastrada.");
+                } else {
+                    ImGui::InputInt("Índice da transação", &indexToEdit);
+                    if (indexToEdit >= 0 && indexToEdit < static_cast<int>(list.size())) {
+                        const auto& t = list[indexToEdit];
+
+                        static char editAmount[64];
+                        static char editCategory[64];
+                        static char editDate[64];
+                        static char editDescription[256];
+                        static int editType = 0;
+
+                        // Preencher campos na primeira entrada
+                        if (ImGui::Button("Carregar dados")) {
+                            snprintf(editAmount, 64, "%.2f", t.getAmount());
+                            snprintf(editCategory, 64, "%s", t.getCategory().c_str());
+                            snprintf(editDate, 64, "%s", t.getDate().c_str());
+                            snprintf(editDescription, 256, "%s", t.getDescription().c_str());
+                            editType = (t.getType() == "renda") ? 1 : 0;
+                        }
+
+                        ImGui::InputText("Novo Valor", editAmount, IM_ARRAYSIZE(editAmount), ImGuiInputTextFlags_CharsDecimal);
+                        ImGui::RadioButton("Despesa", &editType, 0); ImGui::SameLine();
+                        ImGui::RadioButton("Renda", &editType, 1);
+                        ImGui::InputText("Nova Categoria", editCategory, IM_ARRAYSIZE(editCategory));
+                        ImGui::InputText("Nova Data", editDate, IM_ARRAYSIZE(editDate));
+                        ImGui::InputTextMultiline("Nova Descrição", editDescription, IM_ARRAYSIZE(editDescription));
+
+                        if (ImGui::Button("Salvar Alterações")) {
+                            Transaction updated(
+                                std::stod(editAmount),
+                                (editType == 0) ? "despesa" : "renda",
+                                editCategory,
+                                editDate,
+                                editDescription
+                            );
+                            manager.updateTransaction(indexToEdit, updated);
+                            fileManager.saveToFile(manager.getTransactions(), filename);
+                            selectedMenu = 1;
+                        }
+                    }
+                }
+
+                if (ImGui::Button("Voltar"))
+                    selectedMenu = 1;
+
+                ImGui::End();
+                }
+                break;
+
+            case 8: // Remover Transação
+            {
+                ImGui::Begin("Remover Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                const auto& list = manager.getTransactions();
+                static int indexToRemove = 0;
+
+                if (list.empty()) {
+                    ImGui::Text("Nenhuma transação para remover.");
+                } else {
+                    ImGui::InputInt("Índice da transação", &indexToRemove);
+
+                    if (indexToRemove >= 0 && indexToRemove < static_cast<int>(list.size())) {
+                        const auto& t = list[indexToRemove];
+                        ImGui::Text("Transação selecionada:");
+                        ImGui::Text("Valor: R$ %.2f", t.getAmount());
+                        ImGui::Text("Tipo: %s", t.getType().c_str());
+                        ImGui::Text("Categoria: %s", t.getCategory().c_str());
+                        ImGui::Text("Data: %s", t.getDate().c_str());
+                        ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
+
+                        static bool confirm = false;
+                        if (ImGui::Button("Confirmar Remoção")) {
+                            manager.removeTransaction(indexToRemove);
+                            fileManager.saveToFile(manager.getTransactions(), filename);
+                            selectedMenu = 1;
+                        }
+                    }
+                }
+
+                if (ImGui::Button("Voltar"))
+                    selectedMenu = 1;
+
+                ImGui::End();
+                }
+                break;
+
+                case 9: // Filtro por Valor
+                {
+                    ImGui::Begin("Filtrar por Valor", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                    static char valorMinStr[64] = "";
+                    static char valorMaxStr[64] = "";
+
+                    ImGui::InputText("Valor mínimo", valorMinStr, IM_ARRAYSIZE(valorMinStr), ImGuiInputTextFlags_CharsDecimal);
+                    ImGui::InputText("Valor máximo", valorMaxStr, IM_ARRAYSIZE(valorMaxStr), ImGuiInputTextFlags_CharsDecimal);
+
+                    if (ImGui::Button("Filtrar") && strlen(valorMinStr) > 0 && strlen(valorMaxStr) > 0)
+                    {
+                        double minVal = std::stod(valorMinStr);
+                        double maxVal = std::stod(valorMaxStr);
+                        const auto& lista = manager.getTransactions();
+
+                        for (const auto& t : lista)
+                        {
+                            double val = t.getAmount();
+                            if (val >= minVal && val <= maxVal)
+                            {
+                                ImGui::Separator();
+                                ImGui::Text("Valor: R$ %.2f", t.getAmount());
+                                ImGui::Text("Tipo: %s", t.getType().c_str());
+                                ImGui::Text("Categoria: %s", t.getCategory().c_str());
+                                ImGui::Text("Data: %s", t.getDate().c_str());
+                                ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
+                            }
+                        }
+                    }
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 2;
+
+                    ImGui::End();
+                }
+                break;
+
+                case 10: // Filtro por Data
+                {
+                    ImGui::Begin("Filtrar por Data", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                    static char dataFiltro[64] = "";
+                    ImGui::InputText("Data (AAAA-MM-DD)", dataFiltro, IM_ARRAYSIZE(dataFiltro));
+
+                    if (ImGui::Button("Filtrar") && strlen(dataFiltro) > 0)
+                    {
+                        const auto& lista = manager.getTransactions();
+                        for (const auto& t : lista)
+                        {
+                            if (t.getDate() == dataFiltro)
+                            {
+                                ImGui::Separator();
+                                ImGui::Text("Valor: R$ %.2f", t.getAmount());
+                                ImGui::Text("Tipo: %s", t.getType().c_str());
+                                ImGui::Text("Categoria: %s", t.getCategory().c_str());
+                                ImGui::Text("Data: %s", t.getDate().c_str());
+                                ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
+                            }
+                        }
+                    }
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 2;
+
+                    ImGui::End();
+                }
+                break;
+
+                case 11: // Total por Tipo
+                {
+                    ImGui::Begin("Total por Tipo", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                    static int tipoSelecionado = 0; // 0 = Despesa, 1 = Renda
+                    ImGui::RadioButton("Despesas", &tipoSelecionado, 0); ImGui::SameLine();
+                    ImGui::RadioButton("Rendas", &tipoSelecionado, 1);
+
+                    std::string tipoStr = tipoSelecionado == 0 ? "despesa" : "renda";
+                    double total = analyzer.calculateTotalByType(manager.getTransactions(), tipoStr);
+                    ImGui::Text("Total de %s: R$ %.2f", tipoStr.c_str(), total);
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 2;
+
+                    ImGui::End();
+                }
+                break;
+
+                case 12: // Excluir Arquivo
+                {
+                    ImGui::Begin("Excluir Arquivo", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+                    auto arquivos = fileManager.listCSVFiles();
+                    static int selectedToDelete = -1;
+
+                    if (arquivos.empty())
+                    {
+                        ImGui::Text("Nenhum arquivo .csv encontrado.");
+                    }
+                    else
+                    {
+                        for (int i = 0; i < (int)arquivos.size(); ++i)
+                        {
+                            if (ImGui::Selectable(arquivos[i].c_str(), selectedToDelete == i))
+                                selectedToDelete = i;
+                        }
+
+                        if (selectedToDelete != -1)
+                        {
+                            ImGui::Separator();
+                            ImGui::Text("Excluir '%s'?", arquivos[selectedToDelete].c_str());
+
+                            if (ImGui::Button("Confirmar Exclusão"))
+                            {
+                                if (fileManager.deleteFile(arquivos[selectedToDelete]))
+                                {
+                                    ImGui::Text("Arquivo excluído com sucesso.");
+                                    if (arquivos[selectedToDelete] == filename)
+                                    {
+                                        filename.clear();
+                                        manager = TransactionManager();
+                                    }
+                                }
+                                else
+                                {
+                                    ImGui::Text("Erro ao excluir arquivo.");
+                                }
+                                selectedToDelete = -1;
+                            }
+                        }
+                    }
+
+                    if (ImGui::Button("Voltar"))
+                        selectedMenu = 0;
+
+                    ImGui::End();
+                }
+                break;
+
+ 
+
+            }
         }
 
+        // Render
         ImGui::Render();
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
@@ -325,7 +585,6 @@ int main()
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         glfwSwapBuffers(window);
     }
 
@@ -333,7 +592,6 @@ int main()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-
     glfwDestroyWindow(window);
     glfwTerminate();
 
