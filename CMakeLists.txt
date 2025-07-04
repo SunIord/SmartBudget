@@ -21,6 +21,8 @@ file(GLOB INCLUDES_HPP
 	src/transaction.cpp
 	src/transactionManager.cpp
 	src/budgetAnalyzer.cpp
+	src/fileManager.cpp
+	src/appUI.cpp
 )
 
 add_executable(SmartBudget

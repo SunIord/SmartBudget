@@ -1,371 +1,407 @@
-#include "AppUI.hpp"
+#include "appUI.hpp"
 
-void AppUI::run() {
-    initialSetup();
-    int option = 0;
-    do {
-        showMainMenu();
-        std::cin >> option;
-        handleMenuOption(option);
-    } while (option != 0);
+AppUI::AppUI(GLFWwindow* window)
+    : window(window), showFileDialog(true), fileDialogOption(0), selectedMenu(0),
+      currentBalance(0.0), transactionType(0)
+{
+    memset(newFilename, 0, sizeof(newFilename));
+    memset(amount, 0, sizeof(amount));
+    memset(category, 0, sizeof(category));
+    memset(date, 0, sizeof(date));
+    memset(description, 0, sizeof(description));
 }
 
-void AppUI::initialSetup() {
-    std::cout << "==== SmartBudget - Initial Setup ====\n";
-    std::cout << "1 - Create new file\n";
-    std::cout << "2 - Load existing file\n";
-    std::cout << "0 - Exit\n";
-    std::cout << "Choose an option: ";
-    int initialOption;
-    std::cin >> initialOption;
+void AppUI::render() {
+    if (showFileDialog) {
+        renderFileDialog();
+    } else {
+        switch (selectedMenu) {
+            case 0: renderMainMenu(); break;
+            case 1: renderTransactionMenu(); break;
+            case 2: renderReportsMenu(); break;
+            case 3: renderAddTransaction(); break;
+            case 4: renderListTransactions(); break;
+            case 5: renderCategoryTotals(); break;
+            case 6: renderBalanceScreen(); break;
+            case 7: renderEditTransaction(); break;
+            case 8: renderRemoveTransaction(); break;
+            case 9: renderValueFilter(); break;
+            case 10: renderDateFilter(); break;
+            case 11: renderTypeTotals(); break;
+            case 12: renderFileDeletion(); break;
+        }
+    }
+}
 
-    if (initialOption == 1) {
-        std::cout << "Enter base name for the new file: ";
-        std::cin >> filename;
-        filename = FileManager::generateUniqueFilename(filename);
-        std::cout << "New file created: '" << filename << "'\n";
-    } else if (initialOption == 2) {
-        std::cout << "\nAvailable CSV files:\n";
-        DIR* dir;
-        struct dirent* entry;
-        dir = opendir(".");
-        if (dir != nullptr) {
-            while ((entry = readdir(dir)) != nullptr) {
-                std::string filenameEntry = entry->d_name;
-                if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
-                    std::cout << "- " << filenameEntry << std::endl;
-                }
-            }
-            closedir(dir);
+void AppUI::renderFileDialog() {
+    ImGui::OpenPopup("Seleção de Arquivo");
+    if (ImGui::BeginPopupModal("Seleção de Arquivo", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Escolha uma opção:");
+
+        if (ImGui::Button("Criar Novo Arquivo")) {
+            fileDialogOption = 1;
+            memset(newFilename, 0, sizeof(newFilename));
         }
 
-        std::cout << "Enter existing file name: ";
-        std::cin >> filename;
-        filename = FileManager::ensureCSVExtension(filename);
+        ImGui::SameLine();
 
-        if (FileManager::fileExists(filename)) {
-            std::vector<Transaction> loaded;
-            if (FileManager::loadFromFile(loaded, filename)) {
-                for (const auto& t : loaded) {
-                    manager.addTransaction(t);
-                }
-                std::cout << "Transactions loaded from '" << filename << "'\n";
+        if (ImGui::Button("Carregar Arquivo Existente")) {
+            fileDialogOption = 2;
+        }
+
+        if (fileDialogOption == 1) {
+            ImGui::InputText("Nome do Arquivo", newFilename, IM_ARRAYSIZE(newFilename));
+            if (ImGui::Button("Criar") && strlen(newFilename) > 0) {
+                filename = fileManager.generateUniqueFilename(newFilename);
+                showFileDialog = false;
+                ImGui::CloseCurrentPopup();
+            }
+        } else if (fileDialogOption == 2) {
+            auto files = fileManager.listCSVFiles();
+            if (files.empty()) {
+                ImGui::Text("Nenhum arquivo CSV encontrado");
             } else {
-                std::cout << "Error loading file.\n";
-                filename.clear();
+                for (const auto& file : files) {
+                    if (ImGui::Selectable(file.c_str())) {
+                        filename = file;
+                        std::vector<Transaction> loadedTransactions;
+                        if (fileManager.loadFromFile(loadedTransactions, filename)) {
+                            manager = TransactionManager();
+                            for (const auto& t : loadedTransactions) {
+                                manager.addTransaction(t);
+                            }
+                        }
+                        showFileDialog = false;
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
             }
-        } else {
-            std::cout << "File not found.\n";
-            filename.clear();
         }
-    } else if (initialOption == 0) {
-        std::cout << "Exiting program...\n";
-        exit(0);
-    } else {
-        std::cout << "Invalid option.\n";
-        filename.clear();
-        exit(0);
+
+        ImGui::EndPopup();
     }
 }
 
-void AppUI::showMainMenu() {
-    std::cout << "\n==== SmartBudget - Menu ====\n";
-    
-    if (!filename.empty()) {
-        std::cout << "[Current file: " << filename << "]\n";
-    } else {
-        std::cout << "[No file currently loaded]\n";
-    }
+void AppUI::renderMainMenu() {
+    ImGui::Begin("Menu Principal", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+    if (!filename.empty())
+        ImGui::Text("Arquivo: %s", filename.c_str());
 
-    std::cout << "1. Add transaction\n";
-    std::cout << "2. List transactions\n";
-    std::cout << "3. Edit transaction\n";
-    std::cout << "4. Remove transaction\n";
-    std::cout << "5. Calculate total balance\n";
-    std::cout << "6. Total by category\n";
-    std::cout << "7. Total by type\n";
-    std::cout << "8. Filter by date range\n";
-    std::cout << "9. Filter by amount range\n";
-    std::cout << "10. Switch transaction file\n";
-    std::cout << "11. Delete transaction file\n";
-    std::cout << "0. Exit\n";
-    std::cout << "Choose an option: ";
+    if (ImGui::Button("Transações", ImVec2(200, 50))) selectedMenu = 1;
+    if (ImGui::Button("Relatórios", ImVec2(200, 50))) selectedMenu = 2;
+    if (ImGui::Button("Trocar Arquivo", ImVec2(200, 50))) showFileDialog = true;
+    if (ImGui::Button("Excluir Arquivo", ImVec2(200, 50))) selectedMenu = 12;
+    if (ImGui::Button("Sair", ImVec2(200, 50))) glfwSetWindowShouldClose(window, true);
+    ImGui::End();
 }
 
-void AppUI::handleMenuOption(int option) {
-    switch (option) {
-        case 1: addTransaction(); break;
-        case 2: listTransactions(); break;
-        case 3: editTransaction(); break;
-        case 4: removeTransaction(); break;
-        case 5: calculateTotalBalance(); break;
-        case 6: totalByCategory(); break;
-        case 7: totalByType(); break;
-        case 8: filterByDateRange(); break;
-        case 9: filterByAmountRange(); break;
-        case 10: switchTransactionFile(); break;
-        case 11: deleteTransactionFile(); break;
-        case 0: std::cout << "Exiting program...\n"; break;
-        default: std::cout << "Invalid option!\n"; break;
-    }
-}
+void AppUI::renderTransactionMenu() {
+    ImGui::Begin("Transações", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-void AppUI::addTransaction() {
-    if (filename.empty()) {
-        std::cout << "No file selected. Use option 10 to choose a file.\n";
-        return;
+    if (ImGui::Button("Adicionar Transação")) {
+        selectedMenu = 3;
+        memset(amount, 0, sizeof(amount));
+        memset(category, 0, sizeof(category));
+        memset(date, 0, sizeof(date));
+        memset(description, 0, sizeof(description));
+        transactionType = 0;
     }
 
-    double amount;
-    std::string type, category, date, description;
+    if (ImGui::Button("Listar Transações")) selectedMenu = 4;
+    if (ImGui::Button("Editar Transação")) selectedMenu = 7;
+    if (ImGui::Button("Remover Transação")) selectedMenu = 8;
+    if (ImGui::Button("Voltar")) selectedMenu = 0;
 
-    std::cout << "Enter amount: ";
-    std::cin >> amount;
-    std::cout << "Enter type (renda/despesa): ";
-    std::cin >> type;
-    std::cout << "Enter category: ";
-    std::cin >> category;
-    std::cin.ignore();
-    std::cout << "Enter date (YYYY-MM-DD): ";
-    getline(std::cin, date);
-    std::cout << "Enter description: ";
-    getline(std::cin, description);
-
-    Transaction newTransaction(amount, type, category, date, description);
-    manager.addTransaction(newTransaction);
-    FileManager::saveToFile(manager.getTransactions(), filename);
-    std::cout << "Transaction added and saved successfully!\n";
+    ImGui::End();
 }
 
-void AppUI::listTransactions() {
+void AppUI::renderAddTransaction() {
+    ImGui::Begin("Nova Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    ImGui::InputText("Valor (R$)", amount, IM_ARRAYSIZE(amount), ImGuiInputTextFlags_CharsDecimal);
+    ImGui::RadioButton("Despesa", &transactionType, 0); ImGui::SameLine();
+    ImGui::RadioButton("Renda", &transactionType, 1);
+    ImGui::InputText("Categoria", category, IM_ARRAYSIZE(category));
+    ImGui::InputText("Data (AAAA-MM-DD)", date, IM_ARRAYSIZE(date));
+    ImGui::InputTextMultiline("Descrição", description, IM_ARRAYSIZE(description));
+
+    if (ImGui::Button("Salvar") && strlen(amount) > 0) {
+        Transaction nova(std::stod(amount),
+                         transactionType == 0 ? "despesa" : "renda",
+                         category, date, description);
+        manager.addTransaction(nova);
+        fileManager.saveToFile(manager.getTransactions(), filename);
+        selectedMenu = 1;
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Button("Cancelar")) selectedMenu = 1;
+
+    ImGui::End();
+}
+
+void AppUI::renderListTransactions() {
+    ImGui::Begin("Lista de Transações", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
     const auto& list = manager.getTransactions();
+
     if (list.empty()) {
-        std::cout << "No transactions recorded.\n";
+        ImGui::Text("Nenhuma transação cadastrada.");
     } else {
-        std::cout << "\n=== Transaction List ===\n";
-        for (size_t i = 0; i < list.size(); i++) {
-            std::cout << "[" << i << "] ";
-            list[i].print();
+        if (ImGui::BeginTable("Transações", 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+            ImGui::TableSetupColumn("ID");
+            ImGui::TableSetupColumn("Valor");
+            ImGui::TableSetupColumn("Tipo");
+            ImGui::TableSetupColumn("Data");
+            ImGui::TableSetupColumn("Categoria");
+            ImGui::TableHeadersRow();
+
+            for (size_t i = 0; i < list.size(); ++i) {
+                const auto& t = list[i];
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn(); ImGui::Text("%d", (int)i);
+                ImGui::TableNextColumn(); ImGui::Text("R$ %.2f", t.getAmount());
+                ImGui::TableNextColumn(); ImGui::Text("%s", t.getType().c_str());
+                ImGui::TableNextColumn(); ImGui::Text("%s", t.getDate().c_str());
+                ImGui::TableNextColumn(); ImGui::Text("%s", t.getCategory().c_str());
+            }
+            ImGui::EndTable();
         }
     }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 1;
+    ImGui::End();
 }
 
-void AppUI::editTransaction() {
+void AppUI::renderEditTransaction() {
+    ImGui::Begin("Editar Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
     const auto& list = manager.getTransactions();
+    static int indexToEdit = 0;
+
     if (list.empty()) {
-        std::cout << "No transactions to edit.\n";
-        return;
-    }
-
-    int index;
-    std::cout << "Enter the index of the transaction to edit: ";
-    std::cin >> index;
-
-    if (index >= 0 && index < static_cast<int>(list.size())) {
-        std::cout << "\n=== Selected Transaction ===\n";
-        list[index].print();
-
-        double amount;
-        std::string type, category, date, description;
-
-        std::cout << "Enter new amount (current: " << list[index].getAmount() << "): ";
-        std::cin >> amount;
-        std::cout << "Enter new type (renda/despesa) (current: " << list[index].getType() << "): ";
-        std::cin >> type;
-        std::cout << "Enter new category (current: " << list[index].getCategory() << "): ";
-        std::cin >> category;
-        std::cin.ignore();
-        std::cout << "Enter new date (YYYY-MM-DD) (current: " << list[index].getDate() << "): ";
-        getline(std::cin, date);
-        std::cout << "Enter new description (current: " << list[index].getDescription() << "): ";
-        getline(std::cin, description);
-
-        Transaction updatedTransaction(amount, type, category, date, description);
-        manager.updateTransaction(index, updatedTransaction);
-        FileManager::saveToFile(manager.getTransactions(), filename);
-        std::cout << "Transaction updated and file saved.\n";
-
+        ImGui::Text("Nenhuma transação cadastrada.");
     } else {
-        std::cout << "Invalid index! No transaction edited.\n";
+        ImGui::InputInt("Índice da transação", &indexToEdit);
+        if (indexToEdit >= 0 && indexToEdit < (int)list.size()) {
+            const auto& t = list[indexToEdit];
+            static char editAmount[64];
+            static char editCategory[64];
+            static char editDate[64];
+            static char editDescription[256];
+            static int editType = 0;
+
+            if (ImGui::Button("Carregar dados")) {
+                std::snprintf(editAmount, 64, "%.2f", t.getAmount());
+                strncpy(editCategory, t.getCategory().c_str(), sizeof(editCategory));
+                strncpy(editDate, t.getDate().c_str(), sizeof(editDate));
+                strncpy(editDescription, t.getDescription().c_str(), sizeof(editDescription));
+                editType = (t.getType() == "renda") ? 1 : 0;
+            }
+
+            ImGui::InputText("Novo Valor", editAmount, IM_ARRAYSIZE(editAmount), ImGuiInputTextFlags_CharsDecimal);
+            ImGui::RadioButton("Despesa", &editType, 0); ImGui::SameLine();
+            ImGui::RadioButton("Renda", &editType, 1);
+            ImGui::InputText("Nova Categoria", editCategory, IM_ARRAYSIZE(editCategory));
+            ImGui::InputText("Nova Data", editDate, IM_ARRAYSIZE(editDate));
+            ImGui::InputTextMultiline("Nova Descrição", editDescription, IM_ARRAYSIZE(editDescription));
+
+            if (ImGui::Button("Salvar Alterações")) {
+                Transaction updated(
+                    std::stod(editAmount),
+                    editType == 0 ? "despesa" : "renda",
+                    editCategory, editDate, editDescription
+                );
+                manager.updateTransaction(indexToEdit, updated);
+                fileManager.saveToFile(manager.getTransactions(), filename);
+                selectedMenu = 1;
+            }
+        }
     }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 1;
+
+    ImGui::End();
 }
 
-void AppUI::removeTransaction() {
-    int index;
-    std::cout << "Enter the index of the transaction to remove: ";
-    std::cin >> index;
+void AppUI::renderRemoveTransaction() {
+    ImGui::Begin("Remover Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
     const auto& list = manager.getTransactions();
-    if (index >= 0 && index < static_cast<int>(list.size())) {
-        std::cout << "\n=== Selected Transaction ===\n";
-        list[index].print();
-        std::cout << "Are you sure you want to remove this transaction? (y/n): ";
-        char confirm;
-        std::cin >> confirm;
+    static int indexToRemove = 0;
 
-        if (confirm == 'y' || confirm == 'Y') {
-            manager.removeTransaction(index);
-            FileManager::saveToFile(manager.getTransactions(), filename);
-            std::cout << "Transaction removed and file updated.\n";
-        } else {
-            std::cout << "Removal canceled.\n";
-        }
+    if (list.empty()) {
+        ImGui::Text("Nenhuma transação para remover.");
     } else {
-        std::cout << "Invalid index! No transaction removed.\n";
-    }
-}
+        ImGui::InputInt("Índice da transação", &indexToRemove);
+        if (indexToRemove >= 0 && indexToRemove < (int)list.size()) {
+            const auto& t = list[indexToRemove];
+            ImGui::Text("Transação selecionada:");
+            ImGui::Text("Valor: R$ %.2f", t.getAmount());
+            ImGui::Text("Tipo: %s", t.getType().c_str());
+            ImGui::Text("Categoria: %s", t.getCategory().c_str());
+            ImGui::Text("Data: %s", t.getDate().c_str());
+            ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
 
-void AppUI::calculateTotalBalance() {
-    double balance = analyzer.calculateBalance(manager.getTransactions());
-    std::cout << "Total balance: " << balance << std::endl;
-}
-
-void AppUI::totalByCategory() {
-    std::string category;
-    std::cout << "Enter category: ";
-    std::cin >> category;
-    double total = analyzer.calculateTotalByCategory(manager.getTransactions(), category);
-    std::cout << "Total for category '" << category << "': " << total << std::endl;
-}
-
-void AppUI::totalByType() {
-    std::string type;
-    std::cout << "Enter type (renda/despesa): ";
-    std::cin >> type;
-    double total = analyzer.calculateTotalByType(manager.getTransactions(), type);
-    std::cout << "Total for type '" << type << "': " << total << std::endl;
-}
-
-void AppUI::filterByDateRange() {
-    std::string start, end;
-    std::cout << "Enter start date (YYYY-MM-DD): ";
-    std::cin >> start;
-    std::cout << "Enter end date (YYYY-MM-DD): ";
-    std::cin >> end;
-
-    auto results = manager.filterByDateRange(start, end);
-
-    if (results.empty()) {
-        std::cout << "No transactions found in the date range.\n";
-    } else {
-        for (const auto& t : results) {
-            t.print();
+            if (ImGui::Button("Confirmar Remoção")) {
+                manager.removeTransaction(indexToRemove);
+                fileManager.saveToFile(manager.getTransactions(), filename);
+                selectedMenu = 1;
+            }
         }
     }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 1;
+
+    ImGui::End();
 }
 
-void AppUI::filterByAmountRange() {
-    double min, max;
-    std::cout << "Enter minimum amount: ";
-    std::cin >> min;
-    std::cout << "Enter maximum amount: ";
-    std::cin >> max;
+void AppUI::renderReportsMenu() {
+    ImGui::Begin("Relatórios", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-    auto results = manager.filterByAmountRange(min, max);
+    if (ImGui::Button("Saldo Total")) {
+        currentBalance = analyzer.calculateBalance(manager.getTransactions());
+        selectedMenu = 6;
+    }
 
-    if (results.empty()) {
-        std::cout << "No transactions found in the amount range.\n";
-    } else {
-        for (const auto& t : results) {
-            t.print();
+    if (ImGui::Button("Total por Categoria")) selectedMenu = 5;
+    if (ImGui::Button("Filtrar por Data")) selectedMenu = 10;
+    if (ImGui::Button("Filtrar por Valor")) selectedMenu = 9;
+    if (ImGui::Button("Total por Tipo")) selectedMenu = 11;
+    if (ImGui::Button("Voltar")) selectedMenu = 0;
+
+    ImGui::End();
+}
+
+void AppUI::renderBalanceScreen() {
+    ImGui::Begin("Saldo Total", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+    ImGui::Text("Saldo atual calculado:");
+    ImGui::Separator();
+    ImGui::Text("R$ %.2f", currentBalance);
+    ImGui::Separator();
+
+    if (ImGui::Button("Voltar")) selectedMenu = 2;
+    ImGui::End();
+}
+
+void AppUI::renderCategoryTotals() {
+    ImGui::Begin("Totais por Categoria", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    std::map<std::string, double> totals;
+    for (const auto& t : manager.getTransactions()) {
+        double sign = t.getType() == "despesa" ? -1.0 : 1.0;
+        totals[t.getCategory()] += t.getAmount() * sign;
+    }
+
+    for (const auto& [cat, total] : totals) {
+        ImGui::Text("%s: R$ %.2f", cat.c_str(), total);
+    }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 2;
+
+    ImGui::End();
+}
+
+void AppUI::renderValueFilter() {
+    ImGui::Begin("Filtrar por Valor", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    static char minStr[64] = "";
+    static char maxStr[64] = "";
+
+    ImGui::InputText("Valor mínimo", minStr, IM_ARRAYSIZE(minStr), ImGuiInputTextFlags_CharsDecimal);
+    ImGui::InputText("Valor máximo", maxStr, IM_ARRAYSIZE(maxStr), ImGuiInputTextFlags_CharsDecimal);
+
+    if (ImGui::Button("Filtrar") && strlen(minStr) > 0 && strlen(maxStr) > 0) {
+        double minVal = std::stod(minStr);
+        double maxVal = std::stod(maxStr);
+        for (const auto& t : manager.getTransactions()) {
+            double val = t.getAmount();
+            if (val >= minVal && val <= maxVal) {
+                ImGui::Separator();
+                ImGui::Text("Valor: R$ %.2f", val);
+                ImGui::Text("Tipo: %s", t.getType().c_str());
+                ImGui::Text("Categoria: %s", t.getCategory().c_str());
+                ImGui::Text("Data: %s", t.getDate().c_str());
+                ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
+            }
         }
     }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 2;
+
+    ImGui::End();
 }
 
-void AppUI::switchTransactionFile() {
-    manager = TransactionManager();
-    std::cout << "\n==== File Switch ====\n";
-    std::cout << "1 - Create new file\n";
-    std::cout << "2 - Load existing file\n";
-    std::cout << "Choose an option: ";
-    int fileOption;
-    std::cin >> fileOption;
+void AppUI::renderDateFilter() {
+    ImGui::Begin("Filtrar por Data", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
-    if (fileOption == 1) {
-        std::cout << "Enter base name for the new file: ";
-        std::cin >> filename;
-        filename = FileManager::generateUniqueFilename(filename);
-        std::cout << "New file created: '" << filename << "'\n";
-    } else if (fileOption == 2) {
-        std::cout << "\nAvailable CSV files:\n";
-        DIR* dir;
-        struct dirent* entry;
-        dir = opendir(".");
-        if (dir != nullptr) {
-            while ((entry = readdir(dir)) != nullptr) {
-                std::string filenameEntry = entry->d_name;
-                if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
-                    std::cout << "- " << filenameEntry << std::endl;
+    static char data[64] = "";
+    ImGui::InputText("Data (AAAA-MM-DD)", data, IM_ARRAYSIZE(data));
+
+    if (ImGui::Button("Filtrar") && strlen(data) > 0) {
+        for (const auto& t : manager.getTransactions()) {
+            if (t.getDate() == data) {
+                ImGui::Separator();
+                ImGui::Text("Valor: R$ %.2f", t.getAmount());
+                ImGui::Text("Tipo: %s", t.getType().c_str());
+                ImGui::Text("Categoria: %s", t.getCategory().c_str());
+                ImGui::Text("Data: %s", t.getDate().c_str());
+                ImGui::TextWrapped("Descrição: %s", t.getDescription().c_str());
+            }
+        }
+    }
+
+    if (ImGui::Button("Voltar")) selectedMenu = 2;
+
+    ImGui::End();
+}
+
+void AppUI::renderTypeTotals() {
+    ImGui::Begin("Total por Tipo", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    static int tipoSelecionado = 0;
+    ImGui::RadioButton("Despesas", &tipoSelecionado, 0); ImGui::SameLine();
+    ImGui::RadioButton("Rendas", &tipoSelecionado, 1);
+
+    std::string tipoStr = tipoSelecionado == 0 ? "despesa" : "renda";
+    double total = analyzer.calculateTotalByType(manager.getTransactions(), tipoStr);
+    ImGui::Text("Total de %s: R$ %.2f", tipoStr.c_str(), total);
+
+    if (ImGui::Button("Voltar")) selectedMenu = 2;
+
+    ImGui::End();
+}
+
+void AppUI::renderFileDeletion() {
+    ImGui::Begin("Excluir Arquivo", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+
+    auto arquivos = fileManager.listCSVFiles();
+    static int selectedToDelete = -1;
+
+    if (arquivos.empty()) {
+        ImGui::Text("Nenhum arquivo .csv encontrado.");
+    } else {
+        for (int i = 0; i < (int)arquivos.size(); ++i) {
+            if (ImGui::Selectable(arquivos[i].c_str(), selectedToDelete == i))
+                selectedToDelete = i;
+        }
+
+        if (selectedToDelete != -1) {
+            ImGui::Separator();
+            ImGui::Text("Excluir '%s'?", arquivos[selectedToDelete].c_str());
+
+            if (ImGui::Button("Confirmar Exclusão")) {
+                if (fileManager.deleteFile(arquivos[selectedToDelete])) {
+                    if (arquivos[selectedToDelete] == filename) {
+                        filename.clear();
+                        manager = TransactionManager();
+                    }
                 }
-            }
-            closedir(dir);
-        }
-
-        std::cout << "Enter existing file name: ";
-        std::cin >> filename;
-        filename = FileManager::ensureCSVExtension(filename);
-
-        if (FileManager::fileExists(filename)) {
-            std::vector<Transaction> loaded;
-            if (FileManager::loadFromFile(loaded, filename)) {
-                for (const auto& t : loaded) {
-                    manager.addTransaction(t);
-                }
-                std::cout << "Transactions loaded from '" << filename << "'\n";
-            } else {
-                std::cout << "Error loading file.\n";
-                filename.clear();
-            }
-        } else {
-            std::cout << "File not found.\n";
-            filename.clear();
-        }
-    } else {
-        std::cout << "Invalid option.\n";
-        filename.clear();
-    }
-}
-
-void AppUI::deleteTransactionFile() {
-    std::cout << "\nAvailable CSV files:\n";
-    DIR* dir;
-    struct dirent* entry;
-    dir = opendir(".");
-    if (dir != nullptr) {
-        while ((entry = readdir(dir)) != nullptr) {
-            std::string filenameEntry = entry->d_name;
-            if (filenameEntry.length() >= 4 && filenameEntry.substr(filenameEntry.length() - 4) == ".csv") {
-                std::cout << "- " << filenameEntry << std::endl;
+                selectedToDelete = -1;
             }
         }
-        closedir(dir);
     }
 
-    std::cout << "Enter the name of the file to delete: ";
-    std::string fileToDelete;
-    std::cin >> fileToDelete;
-    fileToDelete = FileManager::ensureCSVExtension(fileToDelete);
+    if (ImGui::Button("Voltar")) selectedMenu = 0;
 
-    if (FileManager::fileExists(fileToDelete)) {
-        std::cout << "Are you sure you want to permanently delete the file '" << fileToDelete << "'? (y/n): ";
-        char confirm;
-        std::cin >> confirm;
-
-        if (confirm == 'y' || confirm == 'Y') {
-            if (FileManager::deleteFile(fileToDelete)) {
-                std::cout << "File '" << fileToDelete << "' deleted successfully.\n";
-                if (fileToDelete == filename) {
-                    manager = TransactionManager();
-                    filename.clear();
-                    std::cout << "You deleted the currently loaded file. Current session is now cleared.\n";
-                }
-            } else {
-                std::cout << "Error: Could not delete the file.\n";
-            }
-        } else {
-            std::cout << "Deletion canceled.\n";
-        }
-    } else {
-        std::cout << "File '" << fileToDelete << "' not found.\n";
-    }
+    ImGui::End();
 }

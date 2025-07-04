@@ -10,7 +10,6 @@ private:
 public:
     void addTransaction(const Transaction& t);
     bool removeTransaction(size_t index);
-    void listTransactions() const;
     std::vector<Transaction> filterByType(const std::string& type) const;
     std::vector<Transaction> filterByCategory(const std::string& category) const;
     std::vector<Transaction> filterByDateRange(const std::string& startDate, const std::string& endDate) const;
