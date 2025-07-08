@@ -14,6 +14,15 @@ void Transaction::setType(const std::string& newType) { type = newType; }
 void Transaction::setCategory(const std::string& newCategory) { category = newCategory; }
 void Transaction::setDate(const std::string& newDate) { date = newDate; }
 void Transaction::setDescription(const std::string& newDescription) { description = newDescription; }
+//função apenas para imprimir os dados da transação na main2.cpp
+void Transaction::print() const {
+    std::cout << "Valor: " << amount << std::endl;
+    std::cout << "Tipo: " << type << std::endl;
+    std::cout << "Categoria: " << category << std::endl;
+    std::cout << "Data: " << date << std::endl;
+    std::cout << "Descricao: " << description << std::endl;
+    std::cout << "------------------------------" << std::endl;
+}
 
 //função para converter os dados da transação em uma std::string no formato CSV
 std::string Transaction::toCSV() const {

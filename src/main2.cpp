@@ -2,10 +2,10 @@
 // ./build.bat
 // ./smartbudget
 
-#include "appUI.hpp"
+#include "appUI2.hpp"
 
 int main() {
-    AppUI app;
+    AppUI2 app;
     app.run();
     return 0;
 }

@@ -30,6 +30,7 @@ public:
     void setCategory(const std::string& newCategory);
     void setDate(const std::string& newDate);
     void setDescription(const std::string& newDescription);
+    void print() const;
     std::string toCSV() const;
 };
 
