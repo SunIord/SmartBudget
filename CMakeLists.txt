@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(
 	lib/imgui
 	lib/imgui/backends
-	include
+	SmartBudget/include
 )
 
 # Fontes do ImGui
@@ -18,15 +18,15 @@ file(GLOB IMGUI_SOURCES
 )
 
 file(GLOB INCLUDES_HPP
-	src/transaction.cpp
-	src/transactionManager.cpp
-	src/budgetAnalyzer.cpp
-	src/fileManager.cpp
-	src/appUI.cpp
+	SmartBudget/src/transaction.cpp
+	SmartBudget/src/transactionManager.cpp
+	SmartBudget/src/budgetAnalyzer.cpp
+	SmartBudget/src/fileManager.cpp
+	SmartBudget/src/appUI.cpp
 )
 
 add_executable(SmartBudget
-	src/main.cpp
+	SmartBudget/src/main.cpp
 	${IMGUI_SOURCES}
 	${INCLUDES_HPP}
 )
