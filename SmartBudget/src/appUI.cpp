@@ -37,10 +37,11 @@ void AppUI::render() {
 }
 
 // Variáveis para tamanho e posição da tela
-int width = 320, height = 460;
+int width = 390, height = 480;
 int x = 0, y = 0;
 // Definição do tamanho dos botões
 ImVec2 buttonSize(200, 30);
+ImVec2 inputSize(200, 30);
 
 void AppUI::renderFileDialog() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
@@ -54,18 +55,21 @@ void AppUI::renderFileDialog() {
             memset(newFilename, 0, sizeof(newFilename));
         }
 
-        if (ImGui::Button("Carregar Arquivo Existente", buttonSize)) {
-            fileDialogOption = 2;
-        }
-
         if (fileDialogOption == 1) {
+            ImGui::SetNextItemWidth(inputSize.x);
             ImGui::InputText("Nome do Arquivo", newFilename, IM_ARRAYSIZE(newFilename));
             if (ImGui::Button("Criar", buttonSize) && strlen(newFilename) > 0) {
                 filename = fileManager.generateUniqueFilename(newFilename);
                 showFileDialog = false;
                 ImGui::CloseCurrentPopup();
             }
-        } else if (fileDialogOption == 2) {
+        }
+
+        if (ImGui::Button("Carregar Arquivo Existente", buttonSize)) {
+            fileDialogOption = 2;
+        }
+
+        if (fileDialogOption == 2) {
             auto files = fileManager.listCSVFiles();
             if (files.empty()) {
                 ImGui::Text("Nenhum arquivo CSV encontrado");
@@ -86,7 +90,7 @@ void AppUI::renderFileDialog() {
                 }
             }
         }
-        
+
         if (ImGui::Button("Sair do Programa", buttonSize)) {
             glfwSetWindowShouldClose(window, true);
             ImGui::CloseCurrentPopup();
@@ -138,10 +142,15 @@ void AppUI::renderAddTransaction() {
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
     ImGui::Begin("Nova Transação", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
 
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Valor (R$)", amount, IM_ARRAYSIZE(amount), ImGuiInputTextFlags_CharsDecimal);
+
     ImGui::RadioButton("Despesa", &transactionType, 0); ImGui::SameLine();
     ImGui::RadioButton("Renda", &transactionType, 1);
+
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Categoria", category, IM_ARRAYSIZE(category));
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Data (AAAA-MM-DD)", date, IM_ARRAYSIZE(date));
     ImGui::InputTextMultiline("Descrição", description, IM_ARRAYSIZE(description));
 
@@ -222,10 +231,15 @@ void AppUI::renderEditTransaction() {
                 editType = (t.getType() == "renda") ? 1 : 0;
             }
 
+            ImGui::SetNextItemWidth(inputSize.x);
             ImGui::InputText("Novo Valor", editAmount, IM_ARRAYSIZE(editAmount), ImGuiInputTextFlags_CharsDecimal);
+
             ImGui::RadioButton("Despesa", &editType, 0); ImGui::SameLine();
             ImGui::RadioButton("Renda", &editType, 1);
+
+            ImGui::SetNextItemWidth(inputSize.x);
             ImGui::InputText("Nova Categoria", editCategory, IM_ARRAYSIZE(editCategory));
+            ImGui::SetNextItemWidth(inputSize.x);
             ImGui::InputText("Nova Data", editDate, IM_ARRAYSIZE(editDate));
             ImGui::InputTextMultiline("Nova Descrição", editDescription, IM_ARRAYSIZE(editDescription));
 
@@ -344,7 +358,10 @@ void AppUI::renderValueFilter() {
     static std::vector<Transaction> filtered;
     static bool showResults = false;
 
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Valor mínimo", minStr, IM_ARRAYSIZE(minStr), ImGuiInputTextFlags_CharsDecimal);
+
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Valor máximo", maxStr, IM_ARRAYSIZE(maxStr), ImGuiInputTextFlags_CharsDecimal);
 
     if (ImGui::Button("Filtrar", buttonSize) && strlen(minStr) > 0 && strlen(maxStr) > 0) {
@@ -393,7 +410,9 @@ void AppUI::renderDateFilter() {
     static std::vector<Transaction> filtered;
     static bool showResults = false;
 
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Data inicial (AAAA-MM-DD)", startDate, IM_ARRAYSIZE(startDate));
+    ImGui::SetNextItemWidth(inputSize.x);
     ImGui::InputText("Data final (AAAA-MM-DD)", endDate, IM_ARRAYSIZE(endDate));
 
     if (ImGui::Button("Filtrar", buttonSize) && strlen(startDate) > 0 && strlen(endDate) > 0) {

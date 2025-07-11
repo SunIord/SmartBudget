@@ -12,7 +12,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(320, 460, "SmartBudget", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(390, 480, "SmartBudget", nullptr, nullptr);
     if (!window) {
         glfwTerminate();
         return -1;
