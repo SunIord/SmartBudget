@@ -1,8 +1,10 @@
 #include "transaction.hpp"
 
+// Construtor da classe que inicializa os atributos
 Transaction::Transaction(double amount, const std::string& type, const std::string& category, const std::string& date, const std::string& description)
     : amount(amount), type(type), category(category), date(date), description(description) {}
 
+// Métodos getters e setters para acessar e modificar os atributos
 double Transaction::getAmount() const { return amount; }
 std::string Transaction::getType() const { return type; }
 std::string Transaction::getCategory() const { return category; }
@@ -14,6 +16,7 @@ void Transaction::setType(const std::string& newType) { type = newType; }
 void Transaction::setCategory(const std::string& newCategory) { category = newCategory; }
 void Transaction::setDate(const std::string& newDate) { date = newDate; }
 void Transaction::setDescription(const std::string& newDescription) { description = newDescription; }
+
 //função apenas para imprimir os dados da transação na main2.cpp
 void Transaction::print() const {
     std::cout << "Valor: " << amount << std::endl;

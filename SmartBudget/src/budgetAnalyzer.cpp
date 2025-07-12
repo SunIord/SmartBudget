@@ -1,5 +1,6 @@
 #include "budgetAnalyzer.hpp"
 
+// Calcula o saldo total com base nas transações registradas
 double BudgetAnalyzer::calculateBalance(const std::vector<Transaction>& transactions) const {
     double balance = 0.0;
     for (const auto& transaction : transactions) {
@@ -12,6 +13,7 @@ double BudgetAnalyzer::calculateBalance(const std::vector<Transaction>& transact
     return balance;
 }
 
+// Calcula o total de transações por categoria
 double BudgetAnalyzer::calculateTotalByCategory(const std::vector<Transaction>& transactions, const std::string& category) const {
     double total = 0.0;
     for (const auto& transaction : transactions) {
@@ -26,6 +28,7 @@ double BudgetAnalyzer::calculateTotalByCategory(const std::vector<Transaction>& 
     return total;
 }
 
+// Parecido com o método anterior, mas calcula o total de transações por tipo (renda ou despesa)
 double BudgetAnalyzer::calculateTotalByType(const std::vector<Transaction>& transactions, const std::string& type) const {
     double total = 0.0;
     for (const auto& transaction : transactions) {

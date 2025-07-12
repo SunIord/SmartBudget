@@ -1,5 +1,6 @@
 #include "appUI.hpp"
 
+// Construtor da interface: inicializa variáveis e prepara a UI
 AppUI::AppUI(GLFWwindow* window)
     : window(window), showFileDialog(true), fileDialogOption(0), selectedMenu(0),
     currentBalance(0.0), transactionType(0)
@@ -11,6 +12,7 @@ AppUI::AppUI(GLFWwindow* window)
     memset(description, 0, sizeof(description));
 }
 
+// Função principal que renderiza o conteúdo da interface com base no menu atual
 void AppUI::render() {
     if (showFileDialog && !ImGui::IsPopupOpen("Seleção de Arquivo"))
         ImGui::OpenPopup("Seleção de Arquivo");
@@ -43,6 +45,7 @@ int x = 0, y = 0;
 ImVec2 buttonSize(200, 30);
 ImVec2 inputSize(200, 30);
 
+// Exibe a janela inicial para o usuário escolher, criar ou carregar um arquivo CSV
 void AppUI::renderFileDialog() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -100,6 +103,7 @@ void AppUI::renderFileDialog() {
     }
 }
 
+// Exibe o menu principal com as opções do sistema, como acessar transações e relatórios
 void AppUI::renderMainMenu() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -115,6 +119,7 @@ void AppUI::renderMainMenu() {
     ImGui::End();
 }
 
+// Mostra o submenu com as ações relacionadas às transações financeiras (adicionar, editar, etc)
 void AppUI::renderTransactionMenu() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -137,6 +142,7 @@ void AppUI::renderTransactionMenu() {
     ImGui::End();
 }
 
+// Interface para adicionar uma nova transação ao sistema
 void AppUI::renderAddTransaction() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -169,6 +175,7 @@ void AppUI::renderAddTransaction() {
     ImGui::End();
 }
 
+// Lista todas as transações cadastradas, exibindo os dados em forma de tabela
 void AppUI::renderListTransactions() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -203,6 +210,7 @@ void AppUI::renderListTransactions() {
     ImGui::End();
 }
 
+// Permite editar uma transação existente, informando o índice da mesma
 void AppUI::renderEditTransaction() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -261,6 +269,7 @@ void AppUI::renderEditTransaction() {
     ImGui::End();
 }
 
+// Remove uma transação informando o índice e confirmando a exclusão
 void AppUI::renderRemoveTransaction() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -295,6 +304,7 @@ void AppUI::renderRemoveTransaction() {
     ImGui::End();
 }
 
+// Mostra o menu com as opções de relatórios e análises de dados financeiros
 void AppUI::renderReportsMenu() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -314,6 +324,7 @@ void AppUI::renderReportsMenu() {
     ImGui::End();
 }
 
+// Exibe o saldo atual calculado com base nas transações registradas
 void AppUI::renderBalanceScreen() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -328,6 +339,7 @@ void AppUI::renderBalanceScreen() {
     ImGui::End();
 }
 
+// Mostra o total de valores agrupados por categoria, considerando tipo (renda/despesa)
 void AppUI::renderCategoryTotals() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -348,6 +360,7 @@ void AppUI::renderCategoryTotals() {
     ImGui::End();
 }
 
+// Permite filtrar transações dentro de um intervalo de valores definidos pelo usuário
 void AppUI::renderValueFilter() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -400,6 +413,7 @@ void AppUI::renderValueFilter() {
     ImGui::End();
 }
 
+// Permite filtrar transações entre duas datas informadas pelo usuário
 void AppUI::renderDateFilter() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -450,6 +464,7 @@ void AppUI::renderDateFilter() {
     ImGui::End();
 }
 
+// Mostra o total de transações agrupadas por tipo
 void AppUI::renderTypeTotals() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
@@ -468,6 +483,7 @@ void AppUI::renderTypeTotals() {
     ImGui::End();
 }
 
+// Exibe a janela para confirmar a exclusão do arquivo atual
 void AppUI::renderFileDeletion() {
     ImGui::SetNextWindowSize(ImVec2(width, height), ImGuiCond_Always);
     ImGui::SetNextWindowPos(ImVec2(x, y), ImGuiCond_Always);
